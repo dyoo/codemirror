@@ -26,3 +26,4 @@ span.scheme-symbol	{color: steelblue;}
 span.scheme-punctuation {color: black;}
 span.scheme-lparen      {color: black;}
 span.scheme-rparen      {color: black;}
+span.scheme-comment     { color: orange; }
