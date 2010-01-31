@@ -35,7 +35,7 @@ var tokenizeScheme = (function() {
 	var keywordC = result("keyword c", "keyword");
 	var operator = result("operator", "keyword");
 	var aBoolean = result("boolean", "boolean");
-	var atom = result("atom", "atom");
+	var atom = result("atom", "symbol");
 	return {
 	    "if": keywordA, "while": keywordA, "with": keywordA,
 	    "else": keywordB, "do": keywordB, "try": keywordB, "finally": keywordB,
@@ -53,13 +53,13 @@ var tokenizeScheme = (function() {
     var isHexDigit = /[0-9A-Fa-f]/;
     var isWordChar = /[\w\-\$_]/;
 
-    // Wrapper around jsToken that helps maintain parser state (whether
+    // Wrapper around schemeToken that helps maintain parser state (whether
     // we are inside of a multi-line comment and whether the next token
     // could be a regular expression).
     function schemeTokenState(inside, regexp) {
 	return function(source, setState) {
 	    var newInside = inside;
-	    var type = jsToken(inside, regexp, source, function(c) {newInside = c;});
+	    var type = schemeToken(inside, regexp, source, function(c) {newInside = c;});
 	    var newRegexp = type.type == "operator" || type.type == "keyword c" || type.type.match(/^[\[{}\(,;:]$/);
 	    if (newRegexp != regexp || newInside != inside)
 		setState(schemeTokenState(newInside, newRegexp));
@@ -71,7 +71,7 @@ var tokenizeScheme = (function() {
     // tokenize.js (through schemeTokenState). Advances the source stream
     // over a token, and returns an object containing the type and style
     // of that token.
-    function jsToken(inside, regexp, source, setInside) {
+    function schemeToken(inside, regexp, source, setInside) {
 	function readHexNumber(){
 	    source.next(); // skip the 'x'
 	    source.nextWhileMatches(isHexDigit);
@@ -125,11 +125,11 @@ var tokenizeScheme = (function() {
 		maybeEnd = (next == "*");
 	    }
 	    setInside(newInside);
-	    return {type: "comment", style: "js-comment"};
+	    return {type: "comment", style: "scheme-comment"};
 	}
 	function readOperator() {
 	    source.nextWhileMatches(isOperatorChar);
-	    return {type: "operator", style: "js-operator"};
+	    return {type: "operator", style: "scheme-operator"};
 	}
 	function readString(quote) {
 	    var endBackSlash = nextUntilUnescaped(source, quote);
@@ -151,7 +151,7 @@ var tokenizeScheme = (function() {
 	}
 	// with punctuation, the type of the token is the symbol itself
 	else if (/[\[\]{}\(\),;\:\.\']/.test(ch)) {
-	    return {type: ch, style: "js-punctuation"};
+	    return {type: ch, style: "scheme-punctuation"};
 	}
 	else if (ch == "0" && (source.equals("x") || source.equals("X"))) {
 	    return readHexNumber();
