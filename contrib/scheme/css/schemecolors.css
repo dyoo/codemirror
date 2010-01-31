@@ -18,7 +18,6 @@ pre.code, .editbox {
   margin: 0;
 }
 
-
 span.scheme-string	{color: green;}
 span.scheme-number	{color: blue;}
 span.scheme-boolean     {color: darkred;}

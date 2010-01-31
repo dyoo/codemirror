@@ -103,7 +103,7 @@ var tokenizeScheme = (function() {
     function readRegexp() {
       nextUntilUnescaped(source, "/");
       source.nextWhileMatches(/[gi]/);
-      return {type: "regexp", style: "js-string"};
+      return {type: "regexp", style: "scheme-string"};
     }
     // Mutli-line comments are tricky. We want to return the newlines
     // embedded in them as regular newline tokens, and then continue
@@ -133,7 +133,7 @@ var tokenizeScheme = (function() {
     function readString(quote) {
       var endBackSlash = nextUntilUnescaped(source, quote);
       setInside(endBackSlash ? quote : null);
-      return {type: "string", style: "js-string"};
+      return {type: "string", style: "scheme-string"};
     }
       
 
