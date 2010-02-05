@@ -126,7 +126,6 @@ var tokenizeScheme = (function() {
 	    return readNumber();
 	}
 	else if (ch == ";") {
-	    console.log("comment");
 	    nextUntilUnescaped(source, null);
 	    return { type: "comment", style: "scheme-comment"};
 	}
