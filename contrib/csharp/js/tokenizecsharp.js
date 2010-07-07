@@ -1,10 +1,11 @@
-/* Tokenizer for JavaScript code */
+/* Tokenizer for CSharp code */
 
-var tokenizeJavaScript = (function() {
+var tokenizeCSharp = (function() {
   // Advance the stream until the given character (not preceded by a
   // backslash) is encountered, or the end of the line is reached.
   function nextUntilUnescaped(source, end) {
     var escaped = false;
+    var next;
     while (!source.endOfLine()) {
       var next = source.next();
       if (next == end && !escaped)
@@ -22,7 +23,7 @@ var tokenizeJavaScript = (function() {
   // token.
   var keywords = function(){
     function result(type, style){
-      return {type: type, style: "js-" + style};
+      return {type: type, style: "csharp-" + style};
     }
     // keywords that take a parenthised expression, and then a
     // statement (if)
@@ -34,6 +35,9 @@ var tokenizeJavaScript = (function() {
     var keywordC = result("keyword c", "keyword");
     var operator = result("operator", "keyword");
     var atom = result("atom", "atom");
+    // just a keyword with no indentation implications
+    var keywordD = result("keyword d", "keyword"); 
+    
     return {
       "if": keywordA, "while": keywordA, "with": keywordA,
       "else": keywordB, "do": keywordB, "try": keywordB, "finally": keywordB,
@@ -42,7 +46,22 @@ var tokenizeJavaScript = (function() {
       "var": result("var", "keyword"), "function": result("function", "keyword"), "catch": result("catch", "keyword"),
       "for": result("for", "keyword"), "switch": result("switch", "keyword"),
       "case": result("case", "keyword"), "default": result("default", "keyword"),
-      "true": atom, "false": atom, "null": atom, "undefined": atom, "NaN": atom, "Infinity": atom
+      "true": atom, "false": atom, "null": atom,
+      
+      "class": result("class", "keyword"), "namespace": result("class", "keyword"),
+      
+      "public": keywordD, "private": keywordD, "protected": keywordD, "internal": keywordD,
+      "extern": keywordD, "override": keywordD, "virtual": keywordD, "abstract": keywordD, 
+      "static": keywordD, "out": keywordD, "ref": keywordD, "const": keywordD,
+      
+      "foreach": result("for", "keyword"), "using": keywordC,
+      
+      "int": keywordD, "double": keywordD, "long": keywordD, "bool": keywordD, "char": keywordD, 
+      "void": keywordD, "string": keywordD, "byte": keywordD, "sbyte": keywordD, "decimal": keywordD,
+      "float": keywordD, "uint": keywordD, "ulong": keywordD, "object": keywordD,
+      "short": keywordD, "ushort": keywordD,
+      
+      "get": keywordD, "set": keywordD, "value": keywordD      
     };
   }();
 
@@ -65,7 +84,7 @@ var tokenizeJavaScript = (function() {
     };
   }
 
-  // The token reader, intended to be used by the tokenizer from
+  // The token reader, inteded to be used by the tokenizer from
   // tokenize.js (through jsTokenState). Advances the source stream
   // over a token, and returns an object containing the type and style
   // of that token.
@@ -73,7 +92,7 @@ var tokenizeJavaScript = (function() {
     function readHexNumber(){
       source.next(); // skip the 'x'
       source.nextWhileMatches(isHexDigit);
-      return {type: "number", style: "js-atom"};
+      return {type: "number", style: "csharp-atom"};
     }
 
     function readNumber() {
@@ -88,7 +107,7 @@ var tokenizeJavaScript = (function() {
           source.next();
         source.nextWhileMatches(/[0-9]/);
       }
-      return {type: "number", style: "js-atom"};
+      return {type: "number", style: "csharp-atom"};
     }
     // Read a word, look it up in keywords. If not found, it is a
     // variable, otherwise it is a keyword of the type found.
@@ -97,12 +116,12 @@ var tokenizeJavaScript = (function() {
       var word = source.get();
       var known = keywords.hasOwnProperty(word) && keywords.propertyIsEnumerable(word) && keywords[word];
       return known ? {type: known.type, style: known.style, content: word} :
-      {type: "variable", style: "js-variable", content: word};
+      {type: "variable", style: "csharp-variable", content: word};
     }
     function readRegexp() {
       nextUntilUnescaped(source, "/");
       source.nextWhileMatches(/[gi]/);
-      return {type: "regexp", style: "js-string"};
+      return {type: "regexp", style: "csharp-string"};
     }
     // Mutli-line comments are tricky. We want to return the newlines
     // embedded in them as regular newline tokens, and then continue
@@ -123,16 +142,16 @@ var tokenizeJavaScript = (function() {
         maybeEnd = (next == "*");
       }
       setInside(newInside);
-      return {type: "comment", style: "js-comment"};
+      return {type: "comment", style: "csharp-comment"};
     }
     function readOperator() {
       source.nextWhileMatches(isOperatorChar);
-      return {type: "operator", style: "js-operator"};
+      return {type: "operator", style: "csharp-operator"};
     }
     function readString(quote) {
       var endBackSlash = nextUntilUnescaped(source, quote);
       setInside(endBackSlash ? quote : null);
-      return {type: "string", style: "js-string"};
+      return {type: "string", style: "csharp-string"};
     }
 
     // Fetch the next token. Dispatches on first character in the
@@ -146,7 +165,7 @@ var tokenizeJavaScript = (function() {
       return readString(ch);
     // with punctuation, the type of the token is the symbol itself
     else if (/[\[\]{}\(\),;\:\.]/.test(ch))
-      return {type: ch, style: "js-punctuation"};
+      return {type: ch, style: "csharp-punctuation"};
     else if (ch == "0" && (source.equals("x") || source.equals("X")))
       return readHexNumber();
     else if (/[0-9]/.test(ch))
@@ -155,11 +174,14 @@ var tokenizeJavaScript = (function() {
       if (source.equals("*"))
       { source.next(); return readMultilineComment(ch); }
       else if (source.equals("/"))
-      { nextUntilUnescaped(source, null); return {type: "comment", style: "js-comment"};}
+      { nextUntilUnescaped(source, null); return {type: "comment", style: "csharp-comment"};}
       else if (regexp)
         return readRegexp();
       else
         return readOperator();
+    }
+    else if (ch == "#") {  // treat c# regions like comments
+        nextUntilUnescaped(source, null); return {type: "comment", style: "csharp-comment"};
     }
     else if (isOperatorChar.test(ch))
       return readOperator();

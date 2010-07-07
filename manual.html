@@ -145,7 +145,7 @@
     when you are trying to figure out how they work, but wastes a lot
     of bandwidth in a production system. Take a look at the
     description of the <code>basefiles</code> option below if you want
-    to concatenate and minimise the library.</p>
+    to concatenate and minimise the library (see the <a href="compress.html">compression API</a>).</p>
 
     <p>Apart from these, there are files that implement the various
     parsers. These all start with either <code>parse</code> or
@@ -177,10 +177,14 @@
 
     <dl>
 
-      <dt><code>stylesheet</code></dt><dd>The file name of the style-sheet
-      that should be used to colour the code in the editor frame. See <a
+      <dt><code>stylesheet</code></dt><dd>The file name of the
+      style-sheet, or style-sheets, that should be used to colour the
+      code in the editor frame. Can be a string or an array of
+      strings. See <a
       href="css/jscolors.css"><code>jscolors.css</code></a> for an
-      example.</dd>
+      example. The set of active stylesheets can be changed in a
+      running editor with the <code>setStylesheet</code> method, which
+      also takes a string or array of strings as argument.</dd>
 
       <dt><code>path</code></dt><dd>The path that is prefixed to
       script file names when they are loaded into an IFRAME. (Note that
@@ -320,6 +324,11 @@
       <dt><code>readOnly</code></dt><dd>When set to <code>true</code>,
       the document is not editable.</dd>
 
+      <dt><code>domain</code></dt><dd>Can be set to the value
+      <code>document.domain</code> should have inside of the iframe.
+      Used to prevent access issues in IE, where this value isn't
+      automatically inherited by iframes.</dd>
+
       <dt><code>initCallback</code></dt><dd>If set to a function, this
       will be called (with the editor object as its argument) after
       the editor has finished initialising.</dd>
@@ -409,8 +418,15 @@
 
       <dt><code><a
       href="contrib/php/js/parsephp.js">contrib/php/js/parsephp.js</a></code>
-      (<a href="contrib/php/index.html">demo</a>)</dt><dd>PHP
-      parser.</dd>
+      (<a href="contrib/php/index.html">demo</a>)</dt><dd>PHP parser.
+      There is also <code><a
+      href="contrib/php/js/parsephphtmlmixed.js">contrib/php/js/parsephphtmlmixed.js</a></code>,
+      which wraps this parser to allow mixed-mode HTML + PHP parsing.
+      This one takes a configuration parameter <code>opening</code>,
+      which should contain an array of XML processing instruction
+      openings (<code>&lt;?php</code>, <code>&lt;?</code> etc) which
+      can be used to open a PHP block. Default is
+      <code>["&lt;?php"]</code>.</dd>
 
       <dt><code><a
       href="contrib/python/js/parsepython.js">contrib/python/js/parsepython.js</a></code>
@@ -457,15 +473,6 @@
       <dt><code>focus()</code></dt><dd>Gives focus to the editor
       frame.</dd>
 
-      <dt><code>currentLine()</code> &#8594;
-      <code>number</code></dt><dd>Returns the line on which the cursor
-      is currently sitting. <span class="warn">(Deprecated, see the
-      line-based interface below)</span></dd>
-
-      <dt><code>jumpToLine(number)</code></dt><dd>Moves the cursor to
-      the start of the given line. <span
-      class="warn">(Deprecated)</span></dd>
-
       <dt><code>selection()</code> &#8594;
       <code>string</code></dt><dd>Returns the text that is currently
       selected in the editor.</dd>
@@ -486,7 +493,9 @@
       whether searching should start at the cursor (<code>true</code>)
       or at the start of the document (<code>false</code>). When
       <code>caseFold</code> is true, the search will be
-      case-insensivive. Returns an object that provides an interface
+      case-insensitive; if <code>caseFold</code> is unspecified, the
+      search will be case-sensitive if the search string contains
+      uppercase characters. Returns an object that provides an interface
       for searching. Call its <code>findNext()</code> method to search
       for an occurrence of the given string. This returns
       <code>true</code> if something is found, or <code>false</code>
@@ -520,12 +529,22 @@
       <dt><code>ungrabKeys()</code></dt><dd>Revert the effect of
       <code>grabKeys</code>.</dd>
 
-      <dt><code>setParser(name)</code></dt><dd>Change the active
-      parser. To use this you'll have to load more than one parser
-      (put the one you want to use as default at the end of the list).
-      Then call this function with a string containing the name of the
-      parser you want to switch to (see the parser script file to find
-      the name, it'll be something like <code>CSSParser</code>).</dd>
+      <dt><code>setParser(name, parserConfig)</code></dt><dd>Change
+      the active parser. To use this you'll have to load more than one
+      parser (put the one you want to use as default at the end of the
+      list). Then call this function with a string containing the name
+      of the parser you want to switch to (see the parser script file
+      to find the name, it'll be something like
+      <code>CSSParser</code>). The second argument is optional, and
+      can be used to pass a new parser configuration object.</dd>
+
+      <dt><code>cursorCoords(start)</code></dt><dd>Get the coordinates
+      of the cursor in the editor, relative to the top-left corner of
+      the outer document. Normally returns an object with
+      <code>x</code>, <code>y</code>, and <code>yBot</code> (the
+      bottom of the cursor) properties. May return <code>null</code>
+      if the cursor position could not be determined (for example, if
+      the editor is not focused).</dd>
     </dl>
 
     <p>For detailed interaction with the content of the editor,
@@ -546,6 +565,9 @@
       character}</code> object representing the cursor position.
       <code>start</code> defaults to <code>true</code> and determines
       if the startpoint or the endpoint of the selection is used.</dd>
+      <dt><code>cursorLine()</code> &#8594;
+      <code>handle</code></dt><dd>Returns the line on which the cursor
+      is currently sitting.</dd>
       <dt><code>firstLine()</code> &#8594;
       <code>handle</code></dt><dd>Get the first line of the
       document.</dd>
@@ -572,6 +594,8 @@
       <dt><code>lineNumber(handle)</code> &#8594;
       <code>number</code></dt><dd>Ask which line of the document
       (1-based) the given line is.</dd>
+      <dt><code>jumpToLine(handle)</code></dt><dd>Moves the cursor to
+      the start of the given line.</dd>
       <dt><code>selectLines(startHandle, startOffset,
       endHandle, endOffset)</code></dt><dd>Move the selection to a
       specific point. <code>endHandle</code> and
