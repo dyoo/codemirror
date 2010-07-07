@@ -1,102 +1,123 @@
-var schemeTokenize = 
+/*
+  pltTokenizer: string -> (listof token)
+
+pltTokenizer consumes the string to be tokenized.  It produces
+
+
+where a token is an object of the form
+
+    { type: token-type,
+      text: string,
+      offset: number,
+      line: number,
+      column: number }
+
+
+and a token-type is one of the following strings:
+
+    "#;"
+    "comment"
+    "("
+    ")"
+    "'"
+    "`"
+    ",@"
+    ","
+    "char"
+    "string"
+    "symbol"
+    "number"
+    "incomplete-pipe-comment"
+    "incomplete-string"
+    "unknown"
+*/
+
+
+var pltTokenizer = 
     (function() {
 
 
 
+	//////////////////////////////////////////////////////////////////////
+	// Tokenizer
 
-    //////////////////////////////////////////////////////////////////////
-    // Tokenizer
 
-    // replaceEscapes: string -> string
-    var replaceEscapes = function(s) {
-	return s.replace(/\\./g, function(match, submatch, index) {
-	    switch(match) {
-	    case '\\a': return '\a';
-	    case '\\b': return '\b';
-	    case '\\t': return '\t';
-	    case '\\n': return '\n';
-	    case '\\v': return '\v';
-	    case '\\f': return '\f';
-	    case '\\r': return '\r';
-	    default:
-		return match.substring(1);
+	// countNewlines: string -> number
+	var newlineRegexp = new RegExp("\n", "g");
+	var countNewlines = function(s) {
+	    return s.length - (s.replace(newlineRegexp, "")).length;
+	};
+
+
+	var lineOfTextRegexp = new RegExp("[^\n]*\n", "g");
+	var computeColumn = function(s, col) {
+	    var stripped = s.replace(lineOfTextRegexp, "");
+	    if (stripped.length !== s.length) {
+		return stripped.length;
+	    } else {
+		return s.length + col;
 	    }
-	    // FIXME: add more escape sequences.
-	});
-    }
-
-    // countNewlines: string -> number
-    var newlineRegexp = new RegExp("\n", "g");
-    var countNewlines = function(s) {
-	return s.length - (s.replace(newlineRegexp, "")).length;
-    };
-
-
-    var lineOfTextRegexp = new RegExp("[^\n]*\n", "g");
-    var computeColumn = function(s, col) {
-	var stripped = s.replace(lineOfTextRegexp, "");
-	if (stripped.length !== s.length) {
-	    return stripped.length;
-	} else {
-	    return s.length + col;
 	}
-    }
 
 
-    var nondelimiter = "[^\\s\\\(\\\)\\\[\\\]\\\{\\\}\\\"\\\,\\\'\\\`\\\;]";
+	var nondelimiter = "[^\\s\\\(\\\)\\\[\\\]\\\{\\\}\\\"\\\,\\\'\\\`\\\;]";
 
 
 
-    // error tokens have the type "incomplete-pipe-comment, incomplete-string".
+	/// error tokens have the type "incomplete-pipe-comment", "incomplete-string", or "unknown";
 
-    var PATTERNS = [['whitespace' , /^(\s+)/],
-		    ['#;', /^([#][;])/],
-		    ['comment' , // piped comments
-		     new RegExp("^([#][|]"+
-				"(?:(?:\\|[^\\#])|[^\\|])*"+
-				"[|][#])")],
-		    ['comment' , /(^;[^\n]*)/],
-		    ['incomplete-pipe-comment', new RegExp("^[#][|]")],  // unclosed pipe comment
-		    ['(' , /^(\(|\[|\{)/],
-		    [')' , /^(\)|\]|\})/],
-		    ['\'' , /^(\')/],
-		    ['`' , /^(`)/],
-		    [',@' , /^(,@)/],
-		    [',' , /^(,)/],
-		    ['char', /^\#\\(newline|backspace)/],
-		    ['char', /^\#\\(.)/],
-		    ['string' , new RegExp("^\"((?:([^\\\\\"]|(\\\\.)))*)\"")],
-		    ['incomplete-string', new RegExp("^\"")],      // unclosed string
-		    ['symbol-or-number', new RegExp("^(" + nondelimiter + "+)")]
+	var PATTERNS = [['whitespace' , /^(\s+)/],
 
-		   ];
+			['#;', /^([#][;])/],
+			['comment' , // piped comments
+			 new RegExp("^([#][|]"+
+				    "(?:(?:\\|[^\\#])|[^\\|])*"+
+				    "[|][#])")],
+			['comment' , /(^;[^\n]*)/],
+			['incomplete-pipe-comment', new RegExp("^([#][|])")],  // unclosed pipe comment
+			['(' , /^(\(|\[|\{)/],
+			[')' , /^(\)|\]|\})/],
+			['\'' , /^(\')/],
+			['`' , /^(`)/],
+			[',@' , /^(,@)/],
+			[',' , /^(,)/],
+			['char', /^\#\\(newline|backspace)/],
+			['char', /^\#\\(.)/],
+			['string' , new RegExp("^(\"(?:([^\\\\\"]|(\\\\.)))*\")")],
+			['symbol' , new RegExp("^(\\|(?:([^\\\\\|]|(\\\\.)))*\\|)")],
+			['incomplete-string', new RegExp("^(\")")],      // unclosed string
+			['symbol-or-number', new RegExp("^(" + nondelimiter + "+)")],
+
+			// emergency error production to catch everything else
+			['unknown', new RegExp("^([^\s]+)")],  
+
+		       ];
+	// The set of PATTERNS here should be exhaustive, because whitespace + unknown should
+	// catch anything in a string.
 
 
     var numberHeader = ("(?:(?:\\d+\\/\\d+)|"+
 			(  "(?:(?:\\d+\\.\\d+|\\d+\\.|\\.\\d+)(?:[eE][+\\-]?\\d+)?)|")+
 			(  "(?:\\d+(?:[eE][+\\-]?\\d+)?))"));
 
-    var numberPatterns = [['complex' , new RegExp("^((?:(?:\\#[ei])?[+\\-]?" + numberHeader +")?"
-						  + "(?:[+\\-]" + numberHeader + ")i$)")],
-			  ['number' , /^((?:\#[ei])?[+-]inf.0)$/],
-			  ['number' , /^((?:\#[ei])?[+-]nan.0)$/],
-			  ['number' , new RegExp("^((?:\\#[ei])?[+\\-]?" + numberHeader + "$)")]];
-    
+    var numberPatterns = [
+	// complex numbers
+	['number' , new RegExp("^((?:(?:\\#[ei])?[+\\-]?" + numberHeader +")?"
+			       + "(?:[+\\-]" + numberHeader + ")i$)")],
+	['number' , /^((?:\#[ei])?[+-]inf.0)$/],
+	['number' , /^((?:\#[ei])?[+-]nan.0)$/],
+	['number' , new RegExp("^((?:\\#[ei])?[+\\-]?" + numberHeader + "$)")]];
+	
 
 
 
-    var tokenize = function(s, source) {
-	if (! source) { source = ""; }
-
+    var tokenize = function(s) {
 	var offset = 0;
 	var line = 1;
 	var column = 0;
 	var tokens = [];
-	var shouldContinueLooping = true;
 	
-	while (shouldContinueLooping) {
-	    shouldContinueLooping = false;
-
+	while (s.length > 0) {
 	    for (var i = 0; i < PATTERNS.length; i++) {
 		var patternName = PATTERNS[i][0];
 		var pattern = PATTERNS[i][1];
@@ -108,68 +129,63 @@ var schemeTokenize =
 		    switch(patternName) {
 		    case "incomplete-string":
 		    case "incomplete-pipe-comment":
-			tokens.push({type: patternName, 
-				     text: tokenText,
-				     offset: offset,
-				     line: line,
-				     column: column,
-				     span: wholeMatch.length,
-				     source: source});
+			tokens.push({ type: patternName, 
+				      text: tokenText,
+				      offset: offset,
+				      line: line,
+				      column: column,
+				      span: wholeMatch.length });
 			break;			
 
 
 		    case "string":
-			tokens.push({type: patternName, 
-				     text: replaceEscapes(tokenText),
-				     offset: offset,
-				     line: line,
-				     column: column,
-				     span: wholeMatch.length,
-				     source: source});
+			tokens.push({ type: patternName, 
+				      text: tokenText,
+				      offset: offset,
+				      line: line,
+				      column: column,
+				      span: wholeMatch.length });
 			break;
-
 
 		    case "symbol-or-number":
 			var isNumber = false;
 			for (var j = 0; j < numberPatterns.length; j++) {
 			    var numberMatch = tokenText.match(numberPatterns[j][1]);
 			    if (numberMatch) {
-				tokens.push({type: numberPatterns[j][0],
-					     text: tokenText,
-					     offset: offset,
-					     line: line,
-					     column: column,
-					     span: wholeMatch.length,
-					     source: source});
+				tokens.push({ type: numberPatterns[j][0],
+					      text: tokenText,
+					      offset: offset,
+					      line: line,
+					      column: column,
+					      span: wholeMatch.length });
 
 				isNumber = true;
 				break;
 			    }
 			}
 			if (! isNumber) {
-			    tokens.push({type: "symbol", 
-					 text: tokenText,
-					 offset: offset,
-					 line: line,
-					 column: column,
-					 span: wholeMatch.length,
-					 source: source});
+			    tokens.push({ type: "symbol", 
+					  text: tokenText,
+					  offset: offset,
+					  line: line,
+					  column: column,
+					  span: wholeMatch.length });
 			}
 			break;
 
 		    case "whitespace":
-			// don't tokenize whitespace
+			// don't tokenize whitespace?
 			break;
 
 		    default:
-			tokens.push({type: patternName, 
-				     text: tokenText,
-				     offset: offset,
-				     line: line,
-				     column: column,
-				     span: wholeMatch.length,
-				     source: source});
+			tokens.push({ type: patternName, 
+				      text: tokenText,
+				      offset: offset,
+				      line: line,
+				      column: column,
+				      span: wholeMatch.length });
 		    }
+		
 
 		    offset = offset + wholeMatch.length;
 		    column = computeColumn(wholeMatch, column);
@@ -177,8 +193,7 @@ var schemeTokenize =
 		    s = s.substring(wholeMatch.length);
 
 
-		    shouldContinueLooping = true;
-		    break;
+		    break; 	// breaks out of the pattern for loop
 		}
 	    }
 	}

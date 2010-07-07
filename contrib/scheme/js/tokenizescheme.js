@@ -1,6 +1,46 @@
 /* Tokenizer for JavaScript code */
 
 var tokenizeScheme = (function() {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // Advance the stream until the given character (not preceded by a
     // backslash) is encountered, or the end of the line is reached.
     function nextUntilUnescaped(source, end) {
