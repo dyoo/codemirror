@@ -26,137 +26,96 @@ var assertFails = function(thunk) {
 
 describe('simple atoms', {
     'strings': function() {
-	assertEquals([{type: 'string',
-		       text: "\"hello world\"",
-		       offset: 0,
-		       line: 1,
-		       column: 0,
-		       span: 13}],
+	assertEquals([{style: 'string',
+		       value: "\"hello world\"",
+		       }],
 		     pltTokenizer("\"hello world\""));
 
-	assertEquals([{type: 'string',
-		       text: "\"hello\\n world\"",
-		       offset: 0,
-		       line: 1,
-		       column: 0,
-		       span: 15}],
+	assertEquals([{style: 'string',
+		       value: "\"hello\\n world\"",
+		       }],
 		     pltTokenizer("\"hello\\n world\""));
 
     },
 
     'symbols': function() {
-	assertEquals([{type: 'symbol',
-		       text: "foo",
-		       offset: 0,
-		       line: 1,
-		       column: 0,
-		       span: 3}],
+	assertEquals([{style: 'symbol',
+		       value: "foo",
+		       }],
 		     pltTokenizer("foo"));
 
 	
-	assertEquals([{type: 'symbol',
-		       text: "this-is-a-test",
-		       offset: 0,
-		       line: 1,
-		       column: 0,
-		       span: 14}],
+	assertEquals([{style: 'symbol',
+		       value: "this-is-a-test",
+		       }],
 		     pltTokenizer("this-is-a-test"));
 
 
-	assertEquals([{type: 'symbol',
-		       text: "|foo|",
-		       offset: 0,
-		       line: 1,
-		       column: 0,
-		       span: 5}],
+	assertEquals([{style: 'symbol',
+		       value: "|foo|",
+		       }],
 		     pltTokenizer("|foo|"));
 
 
-	assertEquals([{type: 'symbol',
-		       text: "|foo bar|",
-		       offset: 0,
-		       line: 1,
-		       column: 0,
-		       span: 9}],
+	assertEquals([{style: 'symbol',
+		       value: "|foo bar|",
+		       }],
 		     pltTokenizer("|foo bar|"));
 
 
 
-	assertEquals([{type: 'symbol',
-		       text: "|foo\\| bar|",
-		       offset: 0,
-		       line: 1,
-		       column: 0,
-		       span: 11}],
+	assertEquals([{style: 'symbol',
+		       value: "|foo\\| bar|",
+		       }],
 		     pltTokenizer("|foo\\| bar|"));
 
 
     },
 
     'integers': function() {
-	assertEquals([{type: 'number',
-		       text: "42",
-		       offset: 0,
-		       line: 1,
-		       column: 0,
-		       span: 2}],
+	assertEquals([{style: 'number',
+		       value: "42",
+		       }],
 		     pltTokenizer("42"));
 
-	assertEquals([{type: 'number',
-		       text: "0",
-		       offset: 0,
-		       line: 1,
-		       column: 0,
-		       span: 1}],
+	assertEquals([{style: 'number',
+		       value: "0",
+		       }],
 		     pltTokenizer("0"));
 
 
-	assertEquals([{type: 'number',
-		       text: "-0",
-		       offset: 0,
-		       line: 1,
-		       column: 0,
-		       span: 2}],
+	assertEquals([{style: 'number',
+		       value: "-0",
+		       }],
 		     pltTokenizer("-0"));
 
 
 
-	assertEquals([{type: 'number',
-		       text: "-128934",
-		       offset: 0,
-		       line: 1,
-		       column: 0,
-		       span: 7}],
+	assertEquals([{style: 'number',
+		       value: "-128934",
+		       }],
 		     pltTokenizer("-128934"));
 
 
-	assertEquals([{type: 'number',
-		       text: "123456789012345678901234567890",
-		       offset: 0,
-		       line: 1,
-		       column: 0,
-		       span: 30}],
+	assertEquals([{style: 'number',
+		       value: "123456789012345678901234567890",
+		       }],
 		     pltTokenizer("123456789012345678901234567890"));
     },
 
 
     'rationals': function() {
-	assertEquals([{type: 'number',
-		       text: "1/42",
-		       offset: 0,
-		       line: 1,
-		       column: 0,
-		       span: 4}],
+	assertEquals([{style: 'number',
+		       value: "1/42",
+		       }],
 		     pltTokenizer("1/42"));
 
-	assertEquals([{type: 'number',
-		       text: "-1/42",
-		       offset: 0,
-		       line: 1,
-		       column: 0,
-		       span: 5}],
+	assertEquals([{style: 'number',
+		       value: "-1/42",
+		       }],
 		     pltTokenizer("-1/42"));
     },
+
 
 //     'floats': function() {
 // 	pltTokenizer("1.234");
@@ -166,6 +125,23 @@ describe('simple atoms', {
 //     }
 
 });
+
+
+describe("multiple tokens", {
+    'number, whitespace, string': function() {
+	assertEquals([{style: 'number',
+		       value: "1/42",
+		      },
+		      {style: 'whitespace',
+		       value: ' '},
+		      {style: 'string',
+		       value: "\"is the answer\""}],
+		     pltTokenizer("1/42 \"is the answer\""));
+
+    }
+});
+	 
+	 
 
 
 // describe('incomplete atoms', {

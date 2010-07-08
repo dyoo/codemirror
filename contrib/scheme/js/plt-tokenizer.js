@@ -6,11 +6,8 @@ pltTokenizer consumes the string to be tokenized.  It produces
 
 where a token is an object of the form
 
-    { type: token-type,
-      text: string,
-      offset: number,
-      line: number,
-      column: number }
+    { style: token-type,
+      value: string }
 
 
 and a token-type is one of the following strings:
@@ -129,22 +126,14 @@ var pltTokenizer =
 		    switch(patternName) {
 		    case "incomplete-string":
 		    case "incomplete-pipe-comment":
-			tokens.push({ type: patternName, 
-				      text: tokenText,
-				      offset: offset,
-				      line: line,
-				      column: column,
-				      span: wholeMatch.length });
+			tokens.push({ style: patternName, 
+				      value: tokenText });
 			break;			
 
 
 		    case "string":
-			tokens.push({ type: patternName, 
-				      text: tokenText,
-				      offset: offset,
-				      line: line,
-				      column: column,
-				      span: wholeMatch.length });
+			tokens.push({ style: patternName, 
+				      value: tokenText });
 			break;
 
 		    case "symbol-or-number":
@@ -152,38 +141,27 @@ var pltTokenizer =
 			for (var j = 0; j < numberPatterns.length; j++) {
 			    var numberMatch = tokenText.match(numberPatterns[j][1]);
 			    if (numberMatch) {
-				tokens.push({ type: numberPatterns[j][0],
-					      text: tokenText,
-					      offset: offset,
-					      line: line,
-					      column: column,
-					      span: wholeMatch.length });
+				tokens.push({ style: numberPatterns[j][0],
+					      value: tokenText });
 
 				isNumber = true;
 				break;
 			    }
 			}
 			if (! isNumber) {
-			    tokens.push({ type: "symbol", 
-					  text: tokenText,
-					  offset: offset,
-					  line: line,
-					  column: column,
-					  span: wholeMatch.length });
+			    tokens.push({ style: "symbol", 
+					  value: tokenText });
 			}
 			break;
 
 		    case "whitespace":
-			// don't tokenize whitespace?
+			tokens.push({ style: patternName, 
+				      value: tokenText });
 			break;
 
 		    default:
-			tokens.push({ type: patternName, 
-				      text: tokenText,
-				      offset: offset,
-				      line: line,
-				      column: column,
-				      span: wholeMatch.length });
+			tokens.push({ style: patternName, 
+				      value: tokenText });
 		    }
 		
 
