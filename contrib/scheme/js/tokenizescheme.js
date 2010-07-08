@@ -89,14 +89,25 @@ var tokenizeScheme = (function() {
 
 
     var UNCLOSED_STRING = function(source, setState) {
-	var isUnclosedString = scanUntilUnescaped(source, '"');
-	if (isUnclosedString) {
-	    setState(UNCLOSED_STRING);
+	var readNewline = function() {
+	    var content = source.get();
+	    return { type:'whitespace', style:'whitespace', content: content };
+	};
+
+	var ch = source.peek();
+	if (ch === '\n') {
+	    source.next();
+	    return readNewline();
 	} else {
-	    setState(START);
+	    var isUnclosedString = scanUntilUnescaped(source, '"');
+	    if (isUnclosedString) {
+		setState(UNCLOSED_STRING);
+	    } else {
+		setState(START);
+	    }
+	    var content = source.get();
+	    return {type: "string", style: "scheme-string", content: content};
 	}
-	var text = source.get();
-	return {type: "string", style: "scheme-string", content: text};
     };
 
 
