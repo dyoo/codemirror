@@ -30,67 +30,65 @@ and a token-type is one of the following strings:
 */
 
 
-var pltTokenizer = 
-    (function() {
+var pltTokenizer = (function() {
 
 
-
-	//////////////////////////////////////////////////////////////////////
-	// Tokenizer
-
-
-	// countNewlines: string -> number
-	var newlineRegexp = new RegExp("\n", "g");
-	var countNewlines = function(s) {
-	    return s.length - (s.replace(newlineRegexp, "")).length;
-	};
+    //////////////////////////////////////////////////////////////////////
+    // Tokenizer
 
 
-	var lineOfTextRegexp = new RegExp("[^\n]*\n", "g");
-	var computeColumn = function(s, col) {
-	    var stripped = s.replace(lineOfTextRegexp, "");
-	    if (stripped.length !== s.length) {
-		return stripped.length;
-	    } else {
-		return s.length + col;
-	    }
+    // countNewlines: string -> number
+    var newlineRegexp = new RegExp("\n", "g");
+    var countNewlines = function(s) {
+	return s.length - (s.replace(newlineRegexp, "")).length;
+    };
+
+
+    var lineOfTextRegexp = new RegExp("[^\n]*\n", "g");
+    var computeColumn = function(s, col) {
+	var stripped = s.replace(lineOfTextRegexp, "");
+	if (stripped.length !== s.length) {
+	    return stripped.length;
+	} else {
+	    return s.length + col;
 	}
+    }
 
 
-	var nondelimiter = "[^\\s\\\(\\\)\\\[\\\]\\\{\\\}\\\"\\\,\\\'\\\`\\\;]";
+    var nondelimiter = "[^\\s\\\(\\\)\\\[\\\]\\\{\\\}\\\"\\\,\\\'\\\`\\\;]";
 
 
 
-	/// error tokens have the type "incomplete-pipe-comment", "incomplete-string", or "unknown";
+    /// error tokens have the type "incomplete-pipe-comment", "incomplete-string", or "unknown";
 
-	var PATTERNS = [['whitespace' , /^(\s+)/],
+    var PATTERNS = [['whitespace' , /^(\s+)/],
 
-			['#;', /^([#][;])/],
-			['comment' , // piped comments
-			 new RegExp("^([#][|]"+
-				    "(?:(?:\\|[^\\#])|[^\\|])*"+
-				    "[|][#])")],
-			['comment' , /(^;[^\n]*)/],
-			['incomplete-pipe-comment', new RegExp("^([#][|])")],  // unclosed pipe comment
-			['(' , /^(\(|\[|\{)/],
-			[')' , /^(\)|\]|\})/],
-			['\'' , /^(\')/],
-			['`' , /^(`)/],
-			[',@' , /^(,@)/],
-			[',' , /^(,)/],
-			['char', /^\#\\(newline|backspace)/],
-			['char', /^\#\\(.)/],
-			['string' , new RegExp("^(\"(?:([^\\\\\"]|(\\\\.)))*\")")],
-			['symbol' , new RegExp("^(\\|(?:([^\\\\\|]|(\\\\.)))*\\|)")],
-			['incomplete-string', new RegExp("^(\")")],      // unclosed string
-			['symbol-or-number', new RegExp("^(" + nondelimiter + "+)")],
+		    ['#;', /^([#][;])/],
+		    ['comment' , // piped comments
+		     new RegExp("^([#][|]"+
+				"(?:(?:\\|[^\\#])|[^\\|])*"+
+				"[|][#])")],
+		    ['comment' , /(^;[^\n]*)/],
+		    ['incomplete-pipe-comment', new RegExp("^([#][|])")],  // unclosed pipe comment
+		    ['(' , /^(\(|\[|\{)/],
+		    [')' , /^(\)|\]|\})/],
+		    ['\'' , /^(\')/],
+		    ['`' , /^(`)/],
+		    [',@' , /^(,@)/],
+		    [',' , /^(,)/],
+		    ['char', /^\#\\(newline|backspace)/],
+		    ['char', /^\#\\(.)/],
+		    ['string' , new RegExp("^(\"(?:([^\\\\\"]|(\\\\.)))*\")")],
+		    ['symbol' , new RegExp("^(\\|(?:([^\\\\\|]|(\\\\.)))*\\|)")],
+		    ['incomplete-string', new RegExp("^(\")")],      // unclosed string
+		    ['symbol-or-number', new RegExp("^(" + nondelimiter + "+)")],
 
-			// emergency error production to catch everything else
-			['unknown', new RegExp("^([^\s]+)")],  
+		    // emergency error production to catch everything else
+		    ['unknown', new RegExp("^([^\s]+)")],  
 
-		       ];
-	// The set of PATTERNS here should be exhaustive, because whitespace + unknown should
-	// catch anything in a string.
+		   ];
+    // The set of PATTERNS here should be exhaustive, because whitespace + unknown should
+    // catch anything in a string.
 
 
     var numberHeader = ("(?:(?:\\d+\\/\\d+)|"+
@@ -104,14 +102,11 @@ var pltTokenizer =
 	['number' , /^((?:\#[ei])?[+-]inf.0)$/],
 	['number' , /^((?:\#[ei])?[+-]nan.0)$/],
 	['number' , new RegExp("^((?:\\#[ei])?[+\\-]?" + numberHeader + "$)")]];
-	
+    
 
 
-
+    // tokenize: string -> listof token
     var tokenize = function(s) {
-	var offset = 0;
-	var line = 1;
-	var column = 0;
 	var tokens = [];
 	
 	while (s.length > 0) {
@@ -124,18 +119,6 @@ var pltTokenizer =
 		    var tokenText = result[1];
 
 		    switch(patternName) {
-		    case "incomplete-string":
-		    case "incomplete-pipe-comment":
-			tokens.push({ style: patternName, 
-				      value: tokenText });
-			break;			
-
-
-		    case "string":
-			tokens.push({ style: patternName, 
-				      value: tokenText });
-			break;
-
 		    case "symbol-or-number":
 			var isNumber = false;
 			for (var j = 0; j < numberPatterns.length; j++) {
@@ -154,20 +137,11 @@ var pltTokenizer =
 			}
 			break;
 
-		    case "whitespace":
-			tokens.push({ style: patternName, 
-				      value: tokenText });
-			break;
-
 		    default:
 			tokens.push({ style: patternName, 
 				      value: tokenText });
 		    }
-		
-
-		    offset = offset + wholeMatch.length;
-		    column = computeColumn(wholeMatch, column);
-		    line = line + countNewlines(wholeMatch);
+		    
 		    s = s.substring(wholeMatch.length);
 
 
