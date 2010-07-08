@@ -1,5 +1,18 @@
 /* Tokenizer for Scheme code */
 
+
+
+
+/**
+  TODO: follow the definitions in:
+
+      http://docs.racket-lang.org/reference/reader.html
+
+  to the letter; at the moment, we've just done something quick-and-dirty.
+
+*/
+
+
 var tokenizeScheme = (function() {
 
     // scanUntilUnescaped: string-stream char -> boolean
@@ -85,7 +98,7 @@ var tokenizeScheme = (function() {
 	    source.next(); // skip the 'x'
 	    source.nextWhileMatches(isHexDigit);
 	    return {type: "number", style: "scheme-number"};
-	}
+	};
 
 
 	var readNumber = function() {
@@ -98,7 +111,8 @@ var tokenizeScheme = (function() {
 		source.next();
 	    }
 	    return {type: "number", style: "scheme-number"};
-	}
+	};
+
 
 	// Read a word, look it up in keywords. If not found, it is a
 	// variable, otherwise it is a keyword of the type found.
@@ -110,9 +124,7 @@ var tokenizeScheme = (function() {
 	    } else {
 		return {type: "variable", style: "scheme-symbol", content: word};
 	    }
-
-
-	}
+	};
 
 
 	var readString = function(quote) {
@@ -122,7 +134,7 @@ var tokenizeScheme = (function() {
 	    }
 	    var word = source.get();
 	    return {type: "string", style: "scheme-string", content: word};
-	}
+	};
 
 
 	var readPound = function() {
