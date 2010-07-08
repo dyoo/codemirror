@@ -129,13 +129,13 @@ var SchemeParser = Editor.Parser = (function() {
     function copy(){
       var _context = context, _lexical = lexical, _cc = cc.concat([]), _tokenState = tokens.state;
   
-      return function copyParser(input){
-        context = _context;
-        lexical = _lexical;
-        cc = _cc.concat([]); // copies the array
-        column = indented = 0;
-        tokens = tokenizeScheme(input);
-        return parser;
+      return function (input){
+          context = _context;
+          lexical = _lexical;
+          cc = _cc.concat([]); // copies the array
+          column = indented = 0;
+          tokens = tokenizeScheme(input, _tokenState);
+          return parser;
       };
     }
 
