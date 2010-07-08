@@ -9,7 +9,7 @@ var SchemeParser = Editor.Parser = (function() {
 	var indentTo = function(sourceState, previousTokens) {
 	    return function(tokenText, currentIndentation, direction) {
 		for (var i = 0; i < previousTokens.length; i++) {
-		    console.log(previousTokens[i]);
+//		    console.log(previousTokens[i]);
 		};
 		return currentIndentation;
 	    };
