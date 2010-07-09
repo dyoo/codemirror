@@ -98,7 +98,8 @@ var SchemeParser = Editor.Parser = (function() {
 //  	if (isLambdaLikeContext(context)) {
 //  	}
 
-	return currentIndentation;
+	return defaultIndentation(context);
+//	return currentIndentation;
     };
 
     // scanForward: indentation-context index -> index or -1
@@ -110,7 +111,19 @@ var SchemeParser = Editor.Parser = (function() {
 		return i;
 	}
 	return -1;
+    };
+
+
+    var scanForwardAllowingNewlines = function(context, i) {
+	for(; i < context.length; i++) {
+	    if (context[i].type !== 'whitespace')
+		return i;
+	    if (context[i].type === 'whitespace' && context[i].value === '\n')
+		return -1;
+	}
+	return -1;
     }
+
 
 
 
@@ -137,9 +150,27 @@ var SchemeParser = Editor.Parser = (function() {
     };
 
     var beginLikeIndentation = function(context) {
-	var j = scanForward(context, 1);
-	if (j === -1) { return 0; }
-	return context[j].column + 1;
+	var i = scanForward(context, 1);
+	if (i === -1) { return 0; }
+	var j = scanForwardAllowingNewlines(context, i+1);
+	if (j === -1) { 
+	    return context[i].column +1; 
+	} else {
+	    return context[j].column;
+	}
+    };
+
+
+
+    var defaultIndentation = function(context) {
+	var i = scanForward(context, 1);
+	if (i === -1) { return 0; }
+	var j = scanForwardAllowingNewlines(context, i+1);
+	if (j === -1) { 
+	    return context[i].column; 
+	} else {
+	    return context[j].column;
+	}
     };
 
 
@@ -171,9 +202,6 @@ var SchemeParser = Editor.Parser = (function() {
 	    return function(tokenText, currentIndentation, direction) {
 		var indentationContext = 
 		    getIndentationContext(previousTokens);
-		console.log(previousTokens);
-		console.log(indentationContext);
-
 		return calculateIndentationFromContext(indentationContext,
 						       currentIndentation);		
 	    };
@@ -188,8 +216,6 @@ var SchemeParser = Editor.Parser = (function() {
 		    if (tok.value == "\n") {
 			tok.indentation = indentTo(source.state, 
 						   tokenStack.concat([]));
-		    } else {
-
 		    }
 		}
 		return tok;
