@@ -24,7 +24,7 @@ var SchemeParser = Editor.Parser = (function() {
     // The context is the token sequence of the enclosing s-expression,
     // augmented with column information.
     var getIndentationContext = function(tokens) {
-	var pendingParens = [], i, j, column, context;
+	var pendingParens = [], i, j, line, column, context;
 
 	// Scan for the start of the indentation context.
 	for (i = tokens.length-1; i >= 0; i--) {
@@ -58,6 +58,7 @@ var SchemeParser = Editor.Parser = (function() {
 	    }
 	}
 	j++;
+	line = 0;
 	column = 0;
 	context = [];
 	// Start generating the context, walking forward.
@@ -65,12 +66,14 @@ var SchemeParser = Editor.Parser = (function() {
 	    if (j >= i) {
 		context.push({ type: tokens[j].type,
 			       value: tokens[j].value,
+			       line: line,
 			       column: column });
 	    }
 
 	    if (tokens[j].type === 'whitespace' && 
 		tokens[j].value === '\n') {
 		column = 0;
+		line++;
 	    } else {
 		column += tokens[j].value.length;
 	    }
@@ -82,6 +85,15 @@ var SchemeParser = Editor.Parser = (function() {
 
 
 
+    // printTokens: (arrayof tokens) -> void
+    // debug function to show what the set of tokens look like.
+    var printTokens = function(tokens) {
+	var text = [];
+	for (var i = 0; i < tokens.length; i++) {
+	    text.push(tokens[i].value);
+	}
+	console.log(text.join(''));
+    };
 
 
 
@@ -100,28 +112,65 @@ var SchemeParser = Editor.Parser = (function() {
 	    return lambdaLikeIndentation(context);
   	}
 
-	return defaultIndentation(context);
 //	return currentIndentation;
+	return defaultIndentation(context);
     };
+
+
 
     // scanForward: indentation-context index -> index or -1
     // looks for the first non-whitespace thing, starting from i.
     // If we can't find one, returns -1.
     var scanForward = function(context, i) {
+	var depth = 0;
 	for(; i < context.length; i++) {
-	    if (context[i].type !== 'whitespace')
+	    if (context[i].type !== 'whitespace' && depth === 0)
 		return i;
+	    if (isLparen(context[i].type)) {
+		depth++;
+	    }
+	    if (isRparen(context[i].type)) {
+		depth = Math.max(depth - 1, 0);
+	    }
+	}
+	return -1;
+    };
+
+    // findContextElement: indentation-context number -> index or -1
+    var findContextElement = function(context, index) {
+	var depth = 0;
+	for(var i = 0; i < context.length; i++) {
+	    if (context[i].type !== 'whitespace' && depth === 1) {
+		if (index === 0)
+		    return i;
+		else
+		    index--;
+	    }
+
+	    if (isLparen(context[i].type)) {
+		depth++;
+	    }
+	    if (isRparen(context[i].type)) {
+		depth = Math.max(depth - 1, 0);
+	    }
 	}
 	return -1;
     };
 
 
     var scanForwardWithoutNewlines = function(context, i) {
+	var depth = 0;
 	for(; i < context.length; i++) {
-	    if (context[i].type !== 'whitespace')
+	    if (context[i].type !== 'whitespace' && depth === 0)
 		return i;
 	    if (context[i].type === 'whitespace' && context[i].value === '\n')
 		return -1;
+	    if (isLparen(context[i].type)) {
+		depth++;
+	    }
+	    if (isRparen(context[i].type)) {
+		depth = Math.max(depth - 1, 0);
+	    }
 	}
 	return -1;
     }
@@ -145,14 +194,16 @@ var SchemeParser = Editor.Parser = (function() {
 			       "unit"];
 
     var isBeginLikeContext = function(context) {
-	var j = scanForward(context, 1);
+	var j = findContextElement(context, 0);
+//	var j = scanForward(context, 1);
 	if (j === -1) { return false; }
 	return (/^begin/.test(context[j].value) ||
 		isMember(context[j].value, BEGIN_LIKE_KEYWORDS));
     };
 
     var beginLikeIndentation = function(context) {
-	var i = scanForward(context, 1);
+	var i = findContextElement(context, 0);
+//	var i = scanForward(context, 1);
 	if (i === -1) { return 0; }
 	var j = scanForwardWithoutNewlines(context, i+1);
 	if (j === -1) { 
@@ -170,7 +221,8 @@ var SchemeParser = Editor.Parser = (function() {
     var DEFINE_LIKE_KEYWORDS = ["local"];
 
     var isDefineLikeContext = function(context) {
-	var j = scanForward(context, 1);
+	var j = findContextElement(context, 0);
+//	var j = scanForward(context, 1);
 	if (j === -1) { return false; }
 	return (/^def/.test(context[j].value) ||
 		isMember(context[j].value, DEFINE_LIKE_KEYWORDS));
@@ -178,7 +230,8 @@ var SchemeParser = Editor.Parser = (function() {
 
 
     var defineLikeIndentation = function(context) {
-	var i = scanForward(context, 1);
+	var i = findContextElement(context, 0);
+//	var i = scanForward(context, 1);
 	if (i === -1) { return 0; }
 	return context[i].column +1; 
     };
@@ -284,16 +337,16 @@ var SchemeParser = Editor.Parser = (function() {
 
 
     var isLambdaLikeContext = function(context) {
-	var j = scanForward(context, 1);
+	var j = findContextElement(context, 0);
 	if (j === -1) { return false; }
 	return (isMember(context[j].value, LAMBDA_LIKE_KEYWORDS));
     };
 
 
     var lambdaLikeIndentation = function(context) {
-	var i = scanForward(context, 1);
+	var i = findContextElement(context, 0);
 	if (i === -1) { return 0; }
-	var j = scanForward(context, i+1);
+	var j = findContextElement(context, 1);
 	if (j === -1) { 
 	    return context[i].column + 4; 
 	} else {
@@ -307,9 +360,9 @@ var SchemeParser = Editor.Parser = (function() {
 
     //////////////////////////////////////////////////////////////////////
     var defaultIndentation = function(context) {
-	var i = scanForward(context, 1);
+	var i = findContextElement(context, 0);
 	if (i === -1) { return 0; }
-	var j = scanForwardWithoutNewlines(context, i+1);
+	var j = findContextElement(context, 1);
 	if (j === -1) { 
 	    return context[i].column; 
 	} else {
@@ -369,7 +422,7 @@ var SchemeParser = Editor.Parser = (function() {
 		var _tokenStack = tokenStack.concat([]);
 		var _tokenState = source.state;
 		return function(_source) {
-		    tokenStack = _tokenStack;
+		    tokenStack = _tokenStack.concat([]);
 		    source = tokenizeScheme(_source, _tokenState);
 		    return iter;
 		};
