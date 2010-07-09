@@ -137,6 +137,17 @@ var SchemeParser = Editor.Parser = (function() {
 	return -1;
     };
 
+    // contextElement: context -> (arrayof index)
+    var contextElements = function(context) {
+	var i = 0, index, results = [];
+	
+	while ((index = findContextElement(context, i++)) != -1) {
+	    results.push(index);
+	}
+	return results;
+    };
+
+
 
     //////////////////////////////////////////////////////////////////////
 
@@ -161,14 +172,28 @@ var SchemeParser = Editor.Parser = (function() {
 		isMember(context[j].value, BEGIN_LIKE_KEYWORDS));
     };
 
+
+    // Begin: if there's no elements within the begin context,
+    // the indentation is that of the begin keyword's column + 1.
+    // Otherwise, find the leading element on the last line.
     var beginLikeIndentation = function(context) {
-	var i = findContextElement(context, 0);
-	if (i === -1) { return 0; }
-	var j = findContextElement(context, 1);
-	if (j === -1 || context[j].line !== context[i].line) { 
-	    return context[i].column +1; 
+	var indices = contextElements(context), j;
+	if (indices.length === 0) {
+	    // should be impossible
+	    return 0;
+	} else if (indices.length === 1) {
+	    // if we only see the begin keyword, indentation is based
+	    // off the keyword.
+	    return context[indices[0]].column + 1;
 	} else {
-	    return context[j].column;
+	    // Otherwise, we scan for the contextElement of the last line
+	    for (j = indices.length -1; j > 1; j--) {
+		if (context[indices[j]].line !==
+		    context[indices[j-1]].line) {
+		    return context[indices[j]].column;
+		}
+	    }
+	    return context[indices[j]].column;
 	}
     };
 
