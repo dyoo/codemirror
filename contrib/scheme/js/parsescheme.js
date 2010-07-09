@@ -93,8 +93,9 @@ var SchemeParser = Editor.Parser = (function() {
  	if (isBeginLikeContext(context)) {
 	    return beginLikeIndentation(context);
  	}
-//  	if (isDefineLikeContext(context)) {
-//  	}
+	if (isDefineLikeContext(context)) {
+	    return defineLikeIndentation(context);
+	}
 //  	if (isLambdaLikeContext(context)) {
 //  	}
 
@@ -126,7 +127,7 @@ var SchemeParser = Editor.Parser = (function() {
 
 
 
-
+    //////////////////////////////////////////////////////////////////////
 
     var BEGIN_LIKE_KEYWORDS = ["case-lambda", 
 			       "compound-unit",
@@ -162,6 +163,28 @@ var SchemeParser = Editor.Parser = (function() {
 
 
 
+    //////////////////////////////////////////////////////////////////////
+
+
+    var DEFINE_LIKE_KEYWORDS = ["local"];
+
+    var isDefineLikeContext = function(context) {
+	var j = scanForward(context, 1);
+	if (j === -1) { return false; }
+	return (/^def/.test(context[j].value) ||
+		isMember(context[j].value, DEFINE_LIKE_KEYWORDS));
+    };
+
+
+    var defineLikeIndentation = function(context) {
+	var i = scanForward(context, 1);
+	if (i === -1) { return 0; }
+	return context[i].column +1; 
+    };
+
+
+
+    //////////////////////////////////////////////////////////////////////
     var defaultIndentation = function(context) {
 	var i = scanForward(context, 1);
 	if (i === -1) { return 0; }
