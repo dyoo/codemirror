@@ -106,7 +106,8 @@ var tokenizeScheme = (function() {
 		setState(START);
 	    }
 	    var content = source.get();
-	    return {type: "string", style: "scheme-string", content: content};
+	    return {type: "string", style: "scheme-string", content: content,
+		    isUnclosed: isUnclosedString};
 	}
     };
 
@@ -152,7 +153,8 @@ var tokenizeScheme = (function() {
 		setState(UNCLOSED_STRING);
 	    }
 	    var word = source.get();
-	    return {type: "string", style: "scheme-string", content: word};
+	    return {type: "string", style: "scheme-string", content: word,
+		    isUnclosed: isUnclosedString};
 	};
 
 

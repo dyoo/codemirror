@@ -397,6 +397,14 @@ var SchemeParser = Editor.Parser = (function() {
 
 	var indentTo = function(sourceState, previousTokens) {
 	    return function(tokenText, currentIndentation, direction) {
+
+		// If we're in the middle of an unclosed token,
+		// do not change indentation.
+		if (previousTokens.length >= 2 && 
+		    previousTokens[previousTokens.length-2].isUnclosed) {
+		    return currentIndentation;
+		}
+
 		var indentationContext = 
 		    getIndentationContext(previousTokens);
 		return calculateIndentationFromContext(indentationContext,
