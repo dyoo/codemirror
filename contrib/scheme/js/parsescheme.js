@@ -96,8 +96,9 @@ var SchemeParser = Editor.Parser = (function() {
 	if (isDefineLikeContext(context)) {
 	    return defineLikeIndentation(context);
 	}
-//  	if (isLambdaLikeContext(context)) {
-//  	}
+  	if (isLambdaLikeContext(context)) {
+	    return lambdaLikeIndentation(context);
+  	}
 
 	return defaultIndentation(context);
 //	return currentIndentation;
@@ -115,7 +116,7 @@ var SchemeParser = Editor.Parser = (function() {
     };
 
 
-    var scanForwardAllowingNewlines = function(context, i) {
+    var scanForwardWithoutNewlines = function(context, i) {
 	for(; i < context.length; i++) {
 	    if (context[i].type !== 'whitespace')
 		return i;
@@ -153,7 +154,7 @@ var SchemeParser = Editor.Parser = (function() {
     var beginLikeIndentation = function(context) {
 	var i = scanForward(context, 1);
 	if (i === -1) { return 0; }
-	var j = scanForwardAllowingNewlines(context, i+1);
+	var j = scanForwardWithoutNewlines(context, i+1);
 	if (j === -1) { 
 	    return context[i].column +1; 
 	} else {
@@ -182,13 +183,133 @@ var SchemeParser = Editor.Parser = (function() {
 	return context[i].column +1; 
     };
 
+    //////////////////////////////////////////////////////////////////////
+
+    var LAMBDA_LIKE_KEYWORDS = ["cases",
+				"instantiate",
+				"super-instantiate",
+				"syntax/loc",
+				"quasisyntax/loc",
+				"lambda",
+				"let",
+				"let*",
+				"letrec",
+				"recur",
+				"lambda/kw",
+				"letrec-values",
+				"with-syntax",
+				"with-continuation-mark",
+				"module",
+				"match",
+				"match-let",
+				"match-let*",
+				"match-letrec",
+				"let/cc",
+				"let/ec",
+				"letcc",
+				"catch",
+				"let-syntax",
+				"letrec-syntax",
+				"fluid-let-syntax",
+				"letrec-syntaxes+values",
+				"for",
+				"for/list",
+				"for/hash",
+				"for/hasheq",
+				"for/and",
+				"for/or",
+				"for/lists",
+				"for/first",
+				"for/last",
+				"for/fold",
+				"for*",
+				"for*/list",
+				"for*/hash",
+				"for*/hasheq",
+				"for*/and",
+				"for*/or",
+				"for*/lists",
+				"for*/first",
+				"for*/last",
+				"for*/fold",
+				"kernel-syntax-case",
+				"syntax-case",
+				"syntax-case*",
+				"syntax-rules",
+				"syntax-id-rules",
+				"let-signature",
+				"fluid-let",
+				"let-struct",
+				"let-macro",
+				"let-values",
+				"let*-values",
+				"case",
+				"when",
+				"unless",
+				"let-enumerate",
+				"class",
+				"class*",
+				"class-asi",
+				"class-asi*",
+				"class*/names",
+				"class100",
+				"class100*",
+				"class100-asi",
+				"class100-asi*",
+				"class100*/names",
+				"rec",
+				"make-object",
+				"mixin",
+				"define-some",
+				"do",
+				"opt-lambda",
+				"send*",
+				"with-method",
+				"define-record",
+				"catch",
+				"shared",
+				"unit/sig",
+				"unit/lang",
+				"with-handlers",
+				"interface",
+				"parameterize",
+				"call-with-input-file",
+				"call-with-input-file*",
+				"with-input-from-file",
+				"with-input-from-port",
+				"call-with-output-file",
+				"with-output-to-file",
+				"with-output-to-port",
+				"for-all"];
+
+
+    var isLambdaLikeContext = function(context) {
+	var j = scanForward(context, 1);
+	if (j === -1) { return false; }
+	return (isMember(context[j].value, LAMBDA_LIKE_KEYWORDS));
+    };
+
+
+    var lambdaLikeIndentation = function(context) {
+	var i = scanForward(context, 1);
+	if (i === -1) { return 0; }
+	var j = scanForward(context, i+1);
+	if (j === -1) { 
+	    return context[i].column + 4; 
+	} else {
+	    return context[i].column + 1;
+	}
+    };
+
+
+
 
 
     //////////////////////////////////////////////////////////////////////
     var defaultIndentation = function(context) {
 	var i = scanForward(context, 1);
 	if (i === -1) { return 0; }
-	var j = scanForwardAllowingNewlines(context, i+1);
+	var j = scanForwardWithoutNewlines(context, i+1);
 	if (j === -1) { 
 	    return context[i].column; 
 	} else {
