@@ -913,6 +913,10 @@ var Editor = (function(){
           select.snapshotMove(firstText && (firstText.firstChild || firstText),
                               whiteSpace.firstChild, newIndent, false, true);
         }
+      } else {
+	  if (whiteSpace) {
+	      select.snapshotMove(whiteSpace.firstChild, whiteSpace.firstChild, newIndent, false);
+	  }
       }
       if (indentDiff != 0) this.addDirtyNode(start);
     },

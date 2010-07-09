@@ -361,7 +361,7 @@ var SchemeParser = Editor.Parser = (function() {
     //////////////////////////////////////////////////////////////////////
     var defaultIndentation = function(context) {
 	var i = findContextElement(context, 0);
-	if (i === -1) { return 0; }
+	if (i === -1) { return context[0].column+1; }
 	var j = findContextElement(context, 1);
 	if (j === -1) { 
 	    return context[i].column; 
