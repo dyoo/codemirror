@@ -52,11 +52,12 @@ function removeClass(element, className) {
     var classes = element.className.split(" ");
     for (var i = classes.length - 1 ; i >= 0; i--) {
       if (classes[i] === className) {
-        delete classes[i];
+          classes.splice(i, 1);
       }
     }
     element.className = classes.join(" ");
   }
+
 }
 
 
