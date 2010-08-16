@@ -101,10 +101,21 @@ var JSParser = Editor.Parser = (function() {
         // Newline tokens get an indentation function associated with
         // them.
         token.indentation = indentJS(lexical);
+        // special handling for multiline strings: keep everything in the first
+        // column, as spaces at the start of a multiline string are significant
+        if (lexical.info == "multilineString") {
+          lexical.align = false;
+          token.indentation = function () { return 0; };
+        }
       }
       // No more processing for meaningless tokens.
       if (token.type == "whitespace" || token.type == "comment")
         return token;
+      // Take note when a multiline string is found, so as to
+      // correctly handle indentation at the end of the line
+      // (see above, line 95)
+      if (token.type == "multilineString")
+        lexical.info = 'multilineString';
       // When a meaningful token is found and the lexical scope's
       // align is undefined, it is an aligned scope.
       if (!("align" in lexical))

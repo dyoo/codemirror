@@ -112,6 +112,10 @@
   stylesheet: "lib/codemirror/css/jscolors.css"
 });</pre>
 
+    <p>Instances created like this will have a
+    <code>toTextArea()</code> method which removes them and restores
+    the text area they were based on.</p>
+
     <p>The reason that the script path has to be configured is that
     CodeMirror will load in a bunch of extra files when an editor is
     created (the parser script, among others). To be able to do this,
@@ -261,7 +265,11 @@
 
       <dt><code>width</code>, <code>height</code></dt><dd>The size of
       the editor frame, given as a style-sheet quantities (for example
-      <code>"600px"</code> or <code>"100%"</code>).</dd>
+      <code>"600px"</code> or <code>"100%"</code>). When
+      <code>height</code> is set to <code>dynamic</code>, the editor
+      will automatically resize to fit its contents. In this case, the
+      <code>minHeight</code> option (an integer) is used to determine
+      the minimum height in pixels.</dd>
 
       <dt><code>disableSpellcheck</code></dt><dd>Should the editor
       disable spell-checking on browsers that support it (Firefox 2+).
@@ -315,6 +323,24 @@
       </dl>
       This option can be changed at run-time using the
       <code>setTabMode(mode)</code> method.</dd>
+
+      <dt><code>enterMode</code></dt><dd>Determines how a new line
+      created by pressing enter is indented. Supported modes are:
+      <dl>
+        <dt><code>"indent"</code></dt><dd>The default. Causes the new
+        line to be intented by the rules of the parser.</dd>
+        <dt><code>"keep"</code></dt><dd>Keeps the indentation of the
+        previous line.</dd>
+        <dt><code>"flat"</code></dt><dd>Never indents new lines.</dd>
+      </dl>
+      The <code>setEnterMode</code> method can be used to change this
+      option in a running editor.</dd>
+
+      <dt><code>electricChars</code></dt><dd>A boolean that can be
+      used to turn "electric chars" (characters that cause the current
+      line to be reindented when typed, such as <code>{</code> and
+      <code>}</code> in C-like languages) on and off. Default is
+      on.</dd>
 
       <dt><code>reindentOnLoad</code></dt><dd>When <code>true</code>,
       this causes the content of the editor to be reindented
@@ -487,25 +513,32 @@
       <dt><code>reindentSelection()</code></dt><dd>Automatically
       re-indent the selected lines.</dd>
 
-      <dt><code>getSearchCursor(string, atCursor, caseFold)</code>
-      &#8594; <code>cursor</code></dt><dd>The first argument indicates
-      the string that should be searched for, and the second indicates
-      whether searching should start at the cursor (<code>true</code>)
-      or at the start of the document (<code>false</code>). When
-      <code>caseFold</code> is true, the search will be
-      case-insensitive; if <code>caseFold</code> is unspecified, the
-      search will be case-sensitive if the search string contains
-      uppercase characters. Returns an object that provides an interface
-      for searching. Call its <code>findNext()</code> method to search
-      for an occurrence of the given string. This returns
-      <code>true</code> if something is found, or <code>false</code>
-      if the end of document is reached. When an occurrence has been
-      found, you can call <code>select()</code> to select it, or
+      <dt><code>getSearchCursor(string, startPos, caseFold)</code>
+      &#8594; <code>cursor</code></dt><dd>The first argument provides
+      the string that should be searched for. The second determines
+      where to start searching. It can be <code>false</code> (or left
+      off) for the start of the document, <code>true</code> for the
+      current cursor position, or a <code>{line, character}</code>
+      object (as returned by <code>cursorPosition</code>, or created
+      yourself using a line handle and a number) to set a random
+      position. The third argument, a boolean, determines whether the
+      search will be case-sensitive. If it is not provided, the search
+      will only be case-sensitive if the search string contains
+      uppercase characters. Returns an object that provides an
+      interface for searching. Call its <code>findNext()</code> and
+      <code>findPrevious()</code> methods to search for an occurrence.
+      This returns <code>true</code> if something is found, or
+      <code>false</code> if the end or start of the document was
+      reached. When an occurrence has been found, you can call
+      <code>select()</code> to select it, or
       <code>replace(string)</code> to replace it with a given string.
-      Note that letting the user change the document, or
-      programmatically changing it in any way except for calling
-      <code>replace</code> on the cursor itself, might cause a cursor
-      object to skip back to the beginning of the document.</dd>
+      To find out where the match was found, call the
+      <code>position()</code> method, which returns a <code>{line,
+      character}</code> object. Note that letting the user change the
+      document, or programmatically changing it in any way except for
+      calling <code>replace</code> on the cursor itself, might cause a
+      cursor object to skip back to the beginning of the
+      document.</dd>
 
       <dt><code>undo()</code></dt><dd>Undo one changeset, if available.</dd>
       <dt><code>redo()</code></dt><dd>Redo one changeset, if available.</dd>
