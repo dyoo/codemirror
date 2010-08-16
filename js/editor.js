@@ -947,10 +947,6 @@ var Editor = (function(){
           select.snapshotMove(firstText && (firstText.firstChild || firstText),
                               whiteSpace.firstChild, newIndent, false, true);
         }
-      } else {
-	  if (whiteSpace) {
-	      select.snapshotMove(whiteSpace.firstChild, whiteSpace.firstChild, newIndent, false);
-	  }
       }
       // Make sure cursor ends up after the whitespace
       else if (whiteSpace) {
@@ -1063,14 +1059,8 @@ var Editor = (function(){
           self.options.markParen(node, ok);
         }
         else {
-	    if (ok) {
-		addClass(node, "good-matching-paren");
-	    } else {
-		addClass(node, "bad-matching-paren");
-	    }
-	    
-//             node.style.fontWeight = "bold";
-//             node.style.color = ok ? "#8F8" : "#F88";
+            node.style.fontWeight = "bold";
+            node.style.color = ok ? "#8F8" : "#F88";
         }
       }
       function unhighlight(node) {
@@ -1079,10 +1069,8 @@ var Editor = (function(){
           self.options.unmarkParen(node);
         }
         else {
- 	  removeClass(node, "good-matching-paren");
- 	  removeClass(node, "bad-matching-paren");
-//          node.style.fontWeight = "";
-//          node.style.color = "";
+          node.style.fontWeight = "";
+          node.style.color = "";
         }
       }
       if (!fromKey && self.highlighted) {
