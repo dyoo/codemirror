@@ -55,11 +55,12 @@ var CodeMirror = (function(){
     activeTokens: null,
     cursorActivity: null,
     lineNumbers: false,
+    firstLineNumber: 1,
     indentUnit: 2,
     domain: null
   });
 
-  function addLineNumberDiv(container) {
+  function addLineNumberDiv(container, firstNum) {
     var nums = document.createElement("DIV"),
         scroller = document.createElement("DIV");
     nums.style.position = "absolute";
@@ -74,7 +75,7 @@ var CodeMirror = (function(){
     container.appendChild(nums);
     scroller.className = "CodeMirror-line-numbers";
     nums.appendChild(scroller);
-    scroller.innerHTML = "<div>1</div>";
+    scroller.innerHTML = "<div>" + firstNum + "</div>";
     return nums;
   }
 
@@ -150,7 +151,7 @@ var CodeMirror = (function(){
     if (place.appendChild) place.appendChild(div);
     else place(div);
     div.appendChild(frame);
-    if (options.lineNumbers) this.lineNumbers = addLineNumberDiv(div);
+    if (options.lineNumbers) this.lineNumbers = addLineNumberDiv(div, options.firstLineNumber);
 
     this.win = frame.contentWindow;
     if (!options.domain || !internetExplorer) {
@@ -313,7 +314,7 @@ var CodeMirror = (function(){
 
       function sizeBar() {
         if (frame.offsetWidth == 0) return;
-        for (var root = frame; root.parentNode; root = root.parentNode);
+        for (var root = frame; root.parentNode; root = root.parentNode){}
         if (!nums.parentNode || root != document || !win.Editor) {
           // Clear event handlers (their nodes might already be collected, so try/catch)
           try{clear();}catch(e){}
@@ -341,7 +342,7 @@ var CodeMirror = (function(){
             lastNumber = Math.ceil(targetHeight / lineHeight);
         for (var i = scroller.childNodes.length; i <= lastNumber; i++) {
           var div = document.createElement("DIV");
-          div.appendChild(document.createTextNode(fill ? String(i + 1) : "\u00a0"));
+          div.appendChild(document.createTextNode(fill ? String(i + self.options.firstLineNumber) : "\u00a0"));
           scroller.appendChild(div);
         }
       }
@@ -407,7 +408,7 @@ var CodeMirror = (function(){
           node = body.firstChild;
           lineNum = scroller.firstChild;
           pos = 0;
-          next = 1;
+          next = self.options.firstLineNumber;
           work();
         }
 
@@ -439,21 +440,26 @@ var CodeMirror = (function(){
       this.frame.scrolling = "no";
 
       function updateHeight() {
-        for (var span = body.firstChild, sawBR = false; span; span = span.nextSibling)
-          if (win.isSpan(span) && span.offsetHeight) {
-            lineHeight = span.offsetHeight;
-            if (!sawBR) vmargin = 2 * (self.frame.offsetTop + span.offsetTop + body.offsetTop + (internetExplorer ? 10 : 0));
-            break;
-          }
-        if (lineHeight)
-          self.wrapping.style.height = Math.max(vmargin + lineHeight * (body.getElementsByTagName("BR").length + 1),
-                                                self.options.minHeight) + "px";
+        var trailingLines = 0, node = body.lastChild, computedHeight;
+        while (node && win.isBR(node)) {
+          if (!node.hackBR) trailingLines++;
+          node = node.previousSibling;
+        }
+        if (node) {
+          lineHeight = node.offsetHeight;
+          computedHeight = node.offsetTop + (1 + trailingLines) * lineHeight;
+        }
+        else if (lineHeight) {
+          computedHeight = trailingLines * lineHeight;
+        }
+        if (computedHeight)
+          self.wrapping.style.height = Math.max(vmargin + computedHeight, self.options.minHeight) + "px";
       }
-      setTimeout(updateHeight, 100);
+      setTimeout(updateHeight, 300);
       self.options.cursorActivity = function(x) {
         if (activity) activity(x);
         clearTimeout(timeout);
-        timeout = setTimeout(updateHeight, 200);
+        timeout = setTimeout(updateHeight, 100);
       };
     }
   };
