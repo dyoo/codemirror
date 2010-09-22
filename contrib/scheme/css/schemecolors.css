@@ -37,9 +37,11 @@ span.scheme-comment     { color: orange; }
 
 span.good-matching-paren { 
     font-weight: bold;
+    background-color: lightgray;
     color: #3399FF;  
 }
 span.bad-matching-paren {
     font-weight: bold;
+    background-color: lightgray;
     color: red;
 }
