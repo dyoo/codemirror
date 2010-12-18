@@ -6,14 +6,17 @@
 
 var internetExplorer = document.selection && window.ActiveXObject && /MSIE/.test(navigator.userAgent);
 var webkit = /AppleWebKit/.test(navigator.userAgent);
-var safari = /Apple Computers, Inc/.test(navigator.vendor);
-var gecko = /gecko\/(\d{8})/i.test(navigator.userAgent);
+var safari = /Apple Computer, Inc/.test(navigator.vendor);
+var gecko = navigator.userAgent.match(/gecko\/(\d{8})/i);
+if (gecko) gecko = Number(gecko[1]);
 var mac = /Mac/.test(navigator.platform);
 
 // TODO this is related to the backspace-at-end-of-line bug. Remove
 // this if Opera gets their act together, make the version check more
 // broad if they don't.
 var brokenOpera = window.opera && /Version\/10.[56]/.test(navigator.userAgent);
+// TODO remove this once WebKit 533 becomes less common.
+var slowWebkit = /AppleWebKit\/533/.test(navigator.userAgent);
 
 // Make sure a string does not contain two consecutive 'collapseable'
 // whitespace characters.
@@ -35,7 +38,7 @@ function fixSpaces(string) {
 }
 
 function cleanText(text) {
-  return text.replace(/\u00a0/g, " ");
+  return text.replace(/\u00a0/g, " ").replace(/\u200b/g, "");
 }
 
 // Create a SPAN node with the expected properties for document part
@@ -45,12 +48,14 @@ function makePartSpan(value) {
   if (value.nodeType == 3) text = value.nodeValue;
   else value = document.createTextNode(text);
 
-  var span = document.createElement("SPAN");
+  var span = document.createElement("span");
   span.isPart = true;
   span.appendChild(value);
   span.currentText = text;
   return span;
 }
+
+function alwaysZero() {return 0;}
 
 // On webkit, when the last BR of the document does not have text
 // behind it, the cursor can not be put on the line after it. This
@@ -65,7 +70,7 @@ var webkitLastLineHack = webkit ?
   function(container) {
     var last = container.lastChild;
     if (!last || !last.hackBR) {
-      var br = document.createElement("BR");
+      var br = document.createElement("br");
       br.hackBR = true;
       container.appendChild(br);
     }
@@ -89,7 +94,7 @@ var Editor = (function(){
 
     function simplifyNode(node, top) {
       if (node.nodeType == 3) {
-        var text = node.nodeValue = fixSpaces(node.nodeValue.replace(/\r/g, "").replace(/\n/g, " "));
+        var text = node.nodeValue = fixSpaces(node.nodeValue.replace(/[\r\u200b]/g, "").replace(/\n/g, " "));
         if (text.length) leaving = false;
         result.push(node);
       }
@@ -102,7 +107,7 @@ var Editor = (function(){
         if (!leaving && newlineElements.hasOwnProperty(node.nodeName.toUpperCase())) {
           leaving = true;
           if (!atEnd || !top)
-            result.push(document.createElement("BR"));
+            result.push(document.createElement("br"));
         }
       }
     }
@@ -173,7 +178,9 @@ var Editor = (function(){
     // Check whether a node is a normalized <span> element.
     function partNode(node){
       if (node.isPart && node.childNodes.length == 1 && node.firstChild.nodeType == 3) {
-        node.currentText = node.firstChild.nodeValue;
+        var text = node.firstChild.nodeValue;
+        node.dirty = node.dirty || text != node.currentText;
+        node.currentText = text;
         return !/[\n\t\r]/.test(node.currentText);
       }
       return false;
@@ -265,8 +272,9 @@ var Editor = (function(){
       this.pos = {from: topPos, to: topPos};
     }
 
+    if (caseFold) string = string.toLowerCase();
     // Create a matcher function based on the kind of string we have.
-    var target = (this.caseFold ? string.toLowerCase() : string).split("\n");
+    var target = string.split("\n");
     this.matches = (target.length == 1) ?
       // For one-line strings, searching can be done simply by calling
       // indexOf or lastIndexOf on the current line.
@@ -387,7 +395,7 @@ var Editor = (function(){
     if (options.parserConfig && Editor.Parser.configure)
       Editor.Parser.configure(options.parserConfig);
 
-    if (!options.readOnly)
+    if (!options.readOnly && !internetExplorer)
       select.setCursorPos(container, {node: null, offset: 0});
 
     this.dirty = [];
@@ -414,7 +422,8 @@ var Editor = (function(){
         // body of the document to focus it in IE, making focusing
         // hard when the document is small.
         if (internetExplorer && options.height != "dynamic")
-          document.body.style.minHeight = (frameElement.clientHeight - 2 * document.body.offsetTop - 5) + "px";
+          document.body.style.minHeight = (
+            window.frameElement.clientHeight - 2 * document.body.offsetTop - 5) + "px";
 
         document.documentElement.style.borderWidth = "0";
         if (!options.textWrapping)
@@ -439,7 +448,7 @@ var Editor = (function(){
       addEventHandler(document, "keyup", method(this, "keyUp"));
 
       function cursorActivity() {self.cursorActivity(false);}
-      addEventHandler(document.body, "mouseup", cursorActivity);
+      addEventHandler(internetExplorer ? document.body : window, "mouseup", cursorActivity);
       addEventHandler(document.body, "cut", cursorActivity);
 
       // workaround for a gecko bug [?] where going forward and then
@@ -490,11 +499,11 @@ var Editor = (function(){
       var accum = [];
       select.markSelection();
       forEach(traverseDOM(this.container.firstChild), method(accum, "push"));
-      webkitLastLineHack(this.container);
       select.selectMarked();
       // On webkit, don't count last (empty) line if the webkitLastLineHack BR is present
       if (webkit && this.container.lastChild.hackBR)
         accum.pop();
+      webkitLastLineHack(this.container);
       return cleanText(accum.join(""));
     },
 
@@ -644,14 +653,14 @@ var Editor = (function(){
       webkitLastLineHack(this.container);
     },
 
-    cursorCoords: function(start) {
+    cursorCoords: function(start, internal) {
       var sel = select.cursorPos(this.container, start);
       if (!sel) return null;
       var off = sel.offset, node = sel.node, self = this;
       function measureFromNode(node, xOffset) {
         var y = -(document.body.scrollTop || document.documentElement.scrollTop || 0),
             x = -(document.body.scrollLeft || document.documentElement.scrollLeft || 0) + xOffset;
-        forEach([node, window.frameElement], function(n) {
+        forEach([node, internal ? null : window.frameElement], function(n) {
           while (n) {x += n.offsetLeft; y += n.offsetTop;n = n.offsetParent;}
         });
         return {x: x, y: y, yBot: y + node.offsetHeight};
@@ -688,9 +697,15 @@ var Editor = (function(){
     },
 
     reroutePasteEvent: function() {
-      if (this.capturingPaste || window.opera) return;
+      if (this.capturingPaste || window.opera || (gecko && gecko >= 20101026)) return;
       this.capturingPaste = true;
       var te = window.frameElement.CodeMirror.textareaHack;
+      var coords = this.cursorCoords(true, true);
+      te.style.top = coords.y + "px";
+      if (internetExplorer) {
+        var snapshot = select.getBookmark(this.container);
+        if (snapshot) this.selectionSnapshot = snapshot;
+      }
       parent.focus();
       te.value = "";
       te.focus();
@@ -891,6 +906,37 @@ var Editor = (function(){
           }
         }
       }
+      // In 533.* WebKit versions, when the document is big, typing
+      // something at the end of a line causes the browser to do some
+      // kind of stupid heavy operation, creating delays of several
+      // seconds before the typed characters appear. This very crude
+      // hack inserts a temporary zero-width space after the cursor to
+      // make it not be at the end of the line.
+      else if (slowWebkit) {
+        var sel = select.selectionTopNode(this.container),
+            next = sel ? sel.nextSibling : this.container.firstChild;
+        // Doesn't work on empty lines, for some reason those always
+        // trigger the delay.
+        if (sel && next && isBR(next) && !isBR(sel)) {
+          var cheat = document.createTextNode("\u200b");
+          this.container.insertBefore(cheat, next);
+          this.parent.setTimeout(function() {
+            if (cheat.nodeValue == "\u200b") removeElement(cheat);
+            else cheat.nodeValue = cheat.nodeValue.replace("\u200b", "");
+          }, 20);
+        }
+      }
+
+      // Magic incantation that works abound a webkit bug when you
+      // can't type on a blank line following a line that's wider than
+      // the window.
+      if (webkit && !this.options.textWrapping)
+        setTimeout(function () {
+          var node = select.selectionTopNode(self.container, true);
+          if (node && node.nodeType == 3 && node.previousSibling && isBR(node.previousSibling)
+              && node.nextSibling && isBR(node.nextSibling))
+            node.parentNode.replaceChild(document.createElement("BR"), node.previousSibling);
+        }, 50);
     },
 
     // Mark the node at the cursor dirty when a non-safe key is
@@ -915,6 +961,7 @@ var Editor = (function(){
       var self = this, whiteSpace = whiteSpaceAfter(start);
       var newIndent = 0, curIndent = whiteSpace ? whiteSpace.currentText.length : 0;
 
+      var firstText = whiteSpace ? whiteSpace.nextSibling : (start ? start.nextSibling : this.container.firstChild);
       if (direction == "keep") {
         if (start) {
           var prevWS = whiteSpaceAfter(startOfLine(start.previousSibling))
@@ -924,7 +971,6 @@ var Editor = (function(){
       else {
         // Sometimes the start of the line can influence the correct
         // indentation, so we retrieve it.
-        var firstText = whiteSpace ? whiteSpace.nextSibling : (start ? start.nextSibling : this.container.firstChild);
         var nextChars = (start && firstText && firstText.currentText) ? firstText.currentText : "";
 
         // Ask the lexical context for the correct indentation, and
@@ -1100,7 +1146,7 @@ var Editor = (function(){
         unhighlight(self.highlighted[1]);
       }
 
-      if (!window.parent || !window.select) return;
+      if (!window || !window.parent || !window.select) return;
       // Clear the event property.
       if (this.parenEvent) this.parent.clearTimeout(this.parenEvent);
       this.parenEvent = null;
@@ -1217,10 +1263,15 @@ var Editor = (function(){
 
       if (internetExplorer) {
         this.container.createTextRange().execCommand("unlink");
-        this.selectionSnapshot = select.getBookmark(this.container);
+        clearTimeout(this.saveSelectionSnapshot);
+        var self = this;
+        this.saveSelectionSnapshot = setTimeout(function() {
+          var snapshot = select.getBookmark(self.container);
+          if (snapshot) self.selectionSnapshot = snapshot;
+        }, 200);
       }
 
-      var activity = this.options.cursorActivity;
+      var activity = this.options.onCursorActivity;
       if (!safe || activity) {
         var cursor = select.selectionTopNode(this.container, false);
         if (cursor === false || !this.container.firstChild) return;
@@ -1296,7 +1347,7 @@ var Editor = (function(){
     highlightDirty: function(force) {
       // Prevent FF from raising an error when it is firing timeouts
       // on a page that's no longer loaded.
-      if (!window.parent || !window.select) return false;
+      if (!window || !window.parent || !window.select) return false;
 
       if (!this.options.readOnly) select.markSelection();
       var start, endTime = force ? null : time() + this.options.passTime;
@@ -1316,7 +1367,7 @@ var Editor = (function(){
       var self = this, pos = null;
       return function() {
         // FF timeout weirdness workaround.
-        if (!window.parent || !window.select) return;
+        if (!window || !window.parent || !window.select) return;
         // If the current node is no longer in the document... oh
         // well, we start over.
         if (pos && pos.parentNode != self.container)
@@ -1493,7 +1544,7 @@ var Editor = (function(){
           // later resume parsing from this point, the second is used
           // for indentation.
           part.parserFromHere = parsed.copy();
-          part.indentation = token.indentation;
+          part.indentation = token.indentation || alwaysZero;
           part.dirty = false;
 
           // If the target argument wasn't an integer, go at least
@@ -1517,6 +1568,7 @@ var Editor = (function(){
 
           // If the part matches the token, we can leave it alone.
           if (correctPart(token, part)){
+            if (active && part.dirty) active(part, token, self);
             part.dirty = false;
             parts.next();
           }

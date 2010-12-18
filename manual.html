@@ -1,22 +1,22 @@
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
   <head>
-    <title>CodeMirror user manual</title>
+    <title>CodeMirror: User Manual</title>
     <link rel="stylesheet" type="text/css" href="css/docs.css"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   </head>
   <body>
-    <h1 class="underline">CodeMirror user manual</h1>
 
-    <h2>Contents</h2>
+<h1><span class="logo-braces">{ }</span> <a href="http://codemirror.net/">CodeMirror</a></h1>
 
-    <ul>
-      <li><a href="#useage">Basic Useage</a></li>
-      <li><a href="#configuration">Configuration</a></li>
-      <li><a href="#parsers">Parsers</a></li>
-      <li><a href="#programming">Programming Interface</a></li>
-      <li><a href="#writeparser">Writing a Parser</a></li>
-    </ul>
+<pre class="grey">
+<img src="css/baboon.png" class="logo" alt="logo"/>/* User manual and
+   reference guide */
+</pre>
 
-    <h2 id="useage">Basic Usage</h2>
+<div class="clear"><div class="leftbig blk">
+
+    <h2 id="usage">Basic Usage</h2>
 
     <p>Inside the editor, the tab key is used to re-indent the current
     selection (or the current line when nothing is selected), and
@@ -295,7 +295,7 @@
 
       <dt><code>firstLineNumber</code></dt><dd>When
       <code>lineNumbers</code> is enabled, this determines the number
-      given to the first line. Defualt is <code>1</code>.</dd>
+      given to the first line. Default is <code>1</code>.</dd>
 
       <dt><code>lineNumberDelay</code>,
       <code>lineNumberTime</code></dt><dd>When both line numbers are
@@ -303,6 +303,25 @@
       expensive. These settings can be used to control how fast the
       updating happens &#x2015; they work in the same way as
       <code>passDelay</code> and <code>passTime</code>.</dd>
+
+      <dt><code>onLineNumberClick</code></dt><dd>If given a function
+      value, this function will be called when the user clicks a line
+      number, with the number of the line and the DIV used to display
+      that number as its arguments.</dd>
+
+      <dt><code>styleNumbers</code></dt><dd>A (somewhat awkward) hook
+      that allows your code to change the style of the line numbers
+      for certain lines (to, for example, highlight them). Whenever
+      the line numbers are updated, the function value given through
+      this option is called with three arguments: <code>(numberDIV,
+      lineNode, lineNum)</code>. It can then update the style of the
+      <code>numberDIV</code> element based on either the BR node at
+      the start of the line (<code>lineNode</code>, which is
+      <code>null</code> for the first line), or the actual line number
+      (<code>lineNum</code>). Note that it might get passed DIVs that
+      were already styled before (the DIVs are reused), so it has to
+      'reset' the style to the default for lines that don't need to be
+      styled.</dd>
 
       <dt><code>indentUnit</code></dt><dd>An integer that specifies
       the amount of spaces one 'level' of indentation should add.
@@ -359,11 +378,19 @@
       Used to prevent access issues in IE, where this value isn't
       automatically inherited by iframes.</dd>
 
-      <dt><code>initCallback</code></dt><dd>If set to a function, this
+      <dt><code>noScriptCaching</code></dt><dd>The scripts loaded
+      inside the editor frame are not affected by, for example,
+      ctrl-F5 on Firefox, and will often be cached even though you
+      don't want them to. During development, you can set this option
+      to <code>true</code> to cause CodeMirror to add a changing dummy
+      parameter to the script URLs, which will force browsers to
+      reload them every time.</dd>
+
+      <dt><code>onLoad</code></dt><dd>If set to a function, this
       will be called (with the editor object as its argument) after
       the editor has finished initialising.</dd>
       
-      <dt><code>cursorActivity</code></dt><dd>A function that is
+      <dt><code>onCursorActivity</code></dt><dd>A function that is
       called every time the cursor moves, with the top-level node that
       the cursor is inside or next to as an argument. Can be used to
       have some controls react to the context of the cursor.</dd>
@@ -429,11 +456,15 @@
       <dt><code><a
       href="js/parsehtmlmixed.js">parsehtmlmixed.js</a></code> (<a
       href="mixedtest.html">demo</a>)</dt><dd>A mixed-mode HTML
-      parser. Requires the XML, JavaScript, and CSS parsers to also be
-      loaded, so your <code>parserfile</code> option looks something
-      like <code>["parsexml.js", "parsecss.js",
+      parser. By default, requires the XML, JavaScript, and CSS
+      parsers to also be loaded, so your <code>parserfile</code>
+      option looks something like <code>["parsexml.js", "parsecss.js",
       "tokenizejavascript.js", "parsejavascript.js",
-      "parsehtmlmixed.js"]</code>.</dd>
+      "parsehtmlmixed.js"]</code>. This parser accepts a configuration
+      object with a <code>triggers</code> property to configure which
+      parser should be invoked for which tag. The default looks like
+      this (property names are tags, values are parser names):
+      <code>{script: "JSParser", style: "CSSParser"}</code></dd>
 
       <dt><code><a href="js/parsesparql.js">parsesparql.js</a></code>
       (<a href="sparqltest.html">demo</a>)</dt><dd>Parses the <a
@@ -479,7 +510,7 @@
     href="js/mirrorframe.js"><code>mirrorframe.js</code></a> provides
     a basic example of their usage.</p>
 
-    <h3>Properties</h3>
+    <h3 id="properties">Properties</h3>
 
     <dl>
       <dt><code>frame</code></dt><dd>The editable frame.</dd>
@@ -490,7 +521,7 @@
       <code>CodeMirror-wrapping</code>.</dd>
     </dl>
 
-    <h3>Methods</h3>
+    <h3 id="methods">Methods</h3>
 
     <dl>
       <dt><code>getCode()</code> &#8594;
@@ -583,6 +614,8 @@
       if the cursor position could not be determined (for example, if
       the editor is not focused).</dd>
     </dl>
+
+    <h3 id="lines">Line Manipulation</h3>
 
     <p>For detailed interaction with the content of the editor,
     CodeMirror exposes a line-oriented interface, which allows you to
@@ -719,6 +752,40 @@
     href="js/parsejavascript.js"><code>parsejavascript.js</code></a>,
     <a href="js/parsexml.js"><code>parsexml.js</code></a>, and <a
     href="js/parsecss.js"><code>parsecss.js</code></a>.</p>
+
+</div><div class="rightsmall blk">
+
+  <h2>Contents</h2>
+
+  <ul>
+    <li><a href="#usage">Basic Usage</a></li>
+    <li><a href="#configuration">Configuration</a></li>
+    <li><a href="#parsers">Parsers</a></li>
+    <li><a href="#programming">Programming Interface</a>
+    <ul>
+      <li><a href="#properties">Properties</a></li>
+      <li><a href="#methods">Methods</a></li>
+      <li><a href="#lines">Line Manipulation</a></li>
+    </ul>
+    </li>
+    <li><a href="#writeparser">Writing a Parser</a></li>
+  </ul>
+
+  <h2>Site</h2>
+
+  <ul>
+    <li><a href="index.html">Front Page</a></li>
+    <li><a href="faq.html">FAQ</a></li>
+    <li><a href="http://groups.google.com/group/codemirror">Google Group</a></li>
+    <li><a href="compress.html">Compression Helper</a></li>
+    <li><a href="story.html">War Story</a></li>
+  </ul>
+
+</div></div>
+
+<div style="height: 2em">&nbsp;</div>
+
+<script type="text/javascript" src="css/font.js"></script>
 
   </body>
 </html>

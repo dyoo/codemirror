@@ -103,7 +103,7 @@ UndoHistory.prototype = {
   push: function(from, to, lines) {
     var chain = [];
     for (var i = 0; i < lines.length; i++) {
-      var end = (i == lines.length - 1) ? to : this.container.ownerDocument.createElement("BR");
+      var end = (i == lines.length - 1) ? to : document.createElement("br");
       chain.push({from: from, to: end, text: cleanText(lines[i])});
       from = end;
     }
@@ -145,7 +145,7 @@ UndoHistory.prototype = {
 
   // Commit unless there are pending dirty nodes.
   tryCommit: function() {
-    if (!window.parent || !window.UndoHistory) return; // Stop when frame has been unloaded
+    if (!window || !window.parent || !window.UndoHistory) return; // Stop when frame has been unloaded
     if (this.editor.highlightDirty()) this.commit(true);
     else this.scheduleCommit();
   },
@@ -257,8 +257,8 @@ UndoHistory.prototype = {
     function buildLine(node) {
       var text = [];
       for (var cur = node ? node.nextSibling : self.container.firstChild;
-           cur && !isBR(cur); cur = cur.nextSibling)
-        if (cur.currentText) text.push(cur.currentText);
+           cur && (!isBR(cur) || cur.hackBR); cur = cur.nextSibling)
+        if (!cur.hackBR && cur.currentText) text.push(cur.currentText);
       return {from: node, to: cur, text: cleanText(text.join(""))};
     }
 
@@ -267,7 +267,7 @@ UndoHistory.prototype = {
     var lines = [];
     if (self.firstTouched) self.touched.push(null);
     forEach(self.touched, function(node) {
-      if (node && node.parentNode != self.container) return;
+      if (node && (node.parentNode != self.container || node.hackBR)) return;
 
       if (node) node.historyTouched = false;
       else self.firstTouched = false;
