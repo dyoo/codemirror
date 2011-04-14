@@ -27,9 +27,7 @@
     noticing it.</p>
 
     <p>The editor sports an undo/redo system, accessible with
-    control-z (undo) and control-y (redo). Safari will not allow
-    client scripts to capture control-z presses, but you can use
-    control-backspace instead on that browser.</p>
+    control-z (undo) and control-y (redo).</p>
 
     <p>The key-combination control-[ triggers a paren-blink: If the
     cursor is directly after a '(', ')', '[', ']', '{', or '}', the
@@ -114,7 +112,9 @@
 
     <p>Instances created like this will have a
     <code>toTextArea()</code> method which removes them and restores
-    the text area they were based on.</p>
+    the text area they were based on, and a <code>save()</code> method
+    which simply updates the textarea with the content of the
+    editor.</p>
 
     <p>The reason that the script path has to be configured is that
     CodeMirror will load in a bunch of extra files when an editor is
@@ -234,14 +234,23 @@
       the user clicks on the document. Defaults to <code>false</code>.
       Might be expensive for big documents.</dd>
 
-      <dt><code>markParen</code>,
-      <code>unmarkParen</code></dt><dd>Functions. Can be used to
-      customise the way brackets are marked (and unmarked) when
-      matched. Both take the bracket's <code>SPAN</code> node as their
-      first argument, and <code>markParen</code> takes a second
-      boolean argument indicating whether a successful match was
-      found. The default is to make the brackets bold and green (or
-      red, if not matched).</dd>
+      <dt><code>markParen</code>,<code>unmarkParen</code></dt>
+      <dd>Can be used to customise the way brackets are marked (and
+      unmarked) when matched. The simplest way to do this is to simply
+      set <code>markParen</code> to a string, the name of the CSS
+      class that should be added to the bracket elements when they are
+      matched. Alternatively, you can provide an array of two strings,
+      where the first will be used for successful matches, and the
+      second for failing matches. You'll have to include some CSS file
+      (using the <code>stylesheet</code> option) that defines these
+      classes. Alternatively, you can provide both
+      <code>markParen</code> and <code>unmarkParen</code>, and set
+      them to functions that will be called to style the bracket's
+      <code>SPAN</code> elements. Both will get this element as their
+      first argument, and <code>markParen</code> gets a second boolean
+      argument indicating whether a successful match was found. The
+      default behaviour, if these options are not supplied, is to make
+      the brackets bold and green (or red, if not matched).</dd>
 
       <dt><code>saveFunction</code></dt><dd>If given a function
       value, that function will be invoked when the user presses
@@ -334,8 +343,6 @@
         <dt><code>"indent"</code></dt><dd>The default. Causes tab to
         adjust the indentation of the selection or current line using
         the parser's rules.</dd>
-        <dt><code>"spaces"</code></dt><dd>Pressing tab simply inserts
-        four spaces.</dd>
         <dt><code>"default"</code></dt><dd>CodeMirror does not
         interfere with the tab key, but leaves it to the browser to
         handle it. Binds shift-space to regular indentation
@@ -343,6 +350,9 @@
         <dt><code>"shift"</code></dt><dd>Pressing tab indents the
         current line (or selection) one <code>indentUnit</code>
         deeper, pressing shift-tab, un-indents it.</dd>
+        <dt><code>"spaces"</code></dt><dd>Pressing tab simply inserts
+        four spaces, except when something is selected, in which case
+        the <code>"shift"</code> behaviour is used.</dd>
       </dl>
       This option can be changed at run-time using the
       <code>setTabMode(mode)</code> method.</dd>
@@ -548,27 +558,31 @@
       <dt><code>reindentSelection()</code></dt><dd>Automatically
       re-indent the selected lines.</dd>
 
-      <dt><code>getSearchCursor(string, startPos, caseFold)</code>
+      <dt><code>getSearchCursor(pattern, startPos, caseFold)</code>
       &#8594; <code>cursor</code></dt><dd>The first argument provides
-      the string that should be searched for. The second determines
-      where to start searching. It can be <code>false</code> (or left
-      off) for the start of the document, <code>true</code> for the
-      current cursor position, or a <code>{line, character}</code>
-      object (as returned by <code>cursorPosition</code>, or created
-      yourself using a line handle and a number) to set a random
-      position. The third argument, a boolean, determines whether the
-      search will be case-sensitive. If it is not provided, the search
-      will only be case-sensitive if the search string contains
-      uppercase characters. Returns an object that provides an
-      interface for searching. Call its <code>findNext()</code> and
+      the pattern that should be searched for. It can be a string or a
+      regular expression (with the caveat that regexps won't match
+      across line boundaries, whereas strings will). The second
+      determines where to start searching. It can
+      be <code>false</code> (or left off) for the start of the
+      document, <code>true</code> for the current cursor position, or
+      a <code>{line, character}</code> object (as returned
+      by <code>cursorPosition</code>, or created yourself using a line
+      handle and a number) to set a random position. The third
+      argument, a boolean, determines whether the search will be
+      case-sensitive. If it is not provided, the search will only be
+      case-sensitive if the search string contains uppercase
+      characters. Returns an object that provides an interface for
+      searching. Call its <code>findNext()</code> and
       <code>findPrevious()</code> methods to search for an occurrence.
       This returns <code>true</code> if something is found, or
       <code>false</code> if the end or start of the document was
       reached. When an occurrence has been found, you can call
       <code>select()</code> to select it, or
-      <code>replace(string)</code> to replace it with a given string.
-      To find out where the match was found, call the
-      <code>position()</code> method, which returns a <code>{line,
+      <code>replace(string)</code> to replace it with a given string
+      (you can use \1 placeholders in this string if you matched a
+      regular expression). To find out where the match was found, call
+      the <code>position()</code> method, which returns a <code>{line,
       character}</code> object. Note that letting the user change the
       document, or programmatically changing it in any way except for
       calling <code>replace</code> on the cursor itself, might cause a

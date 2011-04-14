@@ -4,6 +4,7 @@
     <title>CodeMirror</title>
     <link rel="stylesheet" type="text/css" href="css/docs.css"/>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <link rel="alternate" href="http://twitter.com/statuses/user_timeline/242283288.rss" type="application/rss+xml"/>
   </head>
   <body>
 
@@ -33,20 +34,21 @@
       <li><a href="csstest.html">CSS</a></li>
       <li><a href="mixedtest.html">HTML mixed-mode</a></li>
       <li><a href="sparqltest.html">SPARQL</a></li>
-      <li><a href="contrib/php/index.html">HTML+PHP mixed-mode</a> (courtesy of <a href="contrib/php/LICENSE">Yahoo!</a>)</li>
-      <li><a href="contrib/python/index.html">Python</a> (by <a href="contrib/python/LICENSE">Timothy Farrell</a>)</li>
-      <li><a href="contrib/lua/index.html">Lua</a> (by <a href="http://francio.pl/">Franciszek Wawrzak</a>)</li>
-      <li><a href="http://github.com/hakunin/ruby-in-codemirror/tree/master">Ruby</a> (by Michal Hantl, unfinished)</li>
-      <li><a href="contrib/sql/index.html">SQL</a> (by John Benediktsson)</li>
-      <li><a href="contrib/plsql/index.html">PLSQL</a> (by <a href="http://www.oracle-and-apex.com/">Peter Raganitsch</a>)</li>
-      <li><a href="http://www.liranuna.com/diff-parser-for-codemirror/">diff</a> (courtesy of <a href="http://www.liranuna.com">Liran Nuna</a>)</li>
-      <li><a href="contrib/groovy/index.html">Groovy</a> (by <a href="http://exoplatform.org/">eXo Platform</a>)</li>
-      <li><a href="contrib/csharp/index.html">C#</a> (by <a href="http://skilltesting.com/">Boris Gaber and Christopher Buchino</a>)</li>
-      <li><a href="contrib/scheme/index.html">Scheme</a> (by <a href="http://hashcollision.org/">Danny Yoo</a>)</li>
-      <li><a href="contrib/java/index.html">Java</a> (by <a href="http://www.patrick-wied.at/">Patrick Wied</a>)</li>
-      <li><a href="contrib/xquery/index.html">XQuery</a> (by <a href="http://mike.brevoort.com/">Mike Brevoort</a>)</li>
-      <li><a href="contrib/ometa/index.html">OmetaJS</a> (by <a href="http://erickedji.wordpress.com/">Eric KEDJI</a>)</li>
-      <li><a href="contrib/freemarker/index.html">Freemarker</a> (by Magnus Ljung)</li>
+      <li><a href="contrib/php/index.html">HTML+PHP mixed-mode</a></li>
+      <li><a href="contrib/python/index.html">Python</a></li>
+      <li><a href="contrib/lua/index.html">Lua</a></li>
+      <li><a href="http://github.com/hakunin/ruby-in-codemirror/tree/master">Ruby</a> (unfinished)</li>
+      <li><a href="contrib/sql/index.html">SQL</a></li>
+      <li><a href="contrib/plsql/index.html">PLSQL</a></li>
+      <li><a href="http://www.liranuna.com/diff-parser-for-codemirror/">diff</a></li>
+      <li><a href="contrib/groovy/index.html">Groovy</a></li>
+      <li><a href="contrib/csharp/index.html">C#</a></li>
+      <li><a href="contrib/scheme/index.html">Scheme</a></li>
+      <li><a href="contrib/java/index.html">Java</a></li>
+      <li><a href="contrib/xquery/index.html">XQuery</a></li>
+      <li><a href="contrib/ometa/index.html">OmetaJS</a></li>
+      <li><a href="contrib/freemarker/index.html">Freemarker</a></li>
+      <li><a href="contrib/regex/index.html">Regular Expressions</a></li>
     </ul>
 
   </div><div class="left2 blk">
@@ -54,6 +56,8 @@
     <h2 style="margin-top: 0">Some real-world uses:</h2>
 
     <ul>
+      <li><a href="http://code.google.com/p/testing-codemirror-integration/source/browse/file.js?r=default&edit=1">Google Code's in-browser patching</a></li>
+      <li><a href="http://movelang.org/try/">Interactive environment for the Move language</a></li>
       <li><a href="http://kml-samples.googlecode.com/svn/trunk/interactive/index.html">Google Earth KML sampler</a></li>
       <li><a href="http://eloquentjavascript.net/chapter1.html">Eloquent JavaScript's console</a></li>
       <li><a href="http://demo.qooxdoo.org/current/playground/#Hello_World">The qooxdoo playground</a></li>
@@ -66,6 +70,8 @@
       <li><a href="http://scraperwiki.com/editor/">The scraperwiki editor</a></li>
       <li><a href="http://www.linb.net/VisualJS/UIBuilder.html">jsLinb UI Builder</a></li>
       <li><a href="http://code.google.com/p/zk-codemirror/">ZK CodeMirror component</a> (<a href="http://www.jease.org/codemirror/">demo</a>)</li>
+      <li><a href="http://zen-coding.ru/codemirror/">'Zen Coding' on top of CodeMirror</a></li>
+      <li><a href="http://demo.mywebsql.net/">Web-based MySQL administration</a></li>
     </ul>
 
   </div></div>
@@ -133,106 +139,10 @@
 
 <div class="right blk">
 
-  <a href="http://codemirror.net/codemirror.zip" class="download">Download the latest release</a>
+  <a href="http://codemirror.net/" class="download">Current project page</a>
 
-  <h2>Make a donation</h2>
-
-  <ul>
-    <li><span onclick="document.getElementById('paypal').submit();" class="quasilink">Paypal</span></li>
-    <li><span onclick="document.getElementById('bankinfo').style.display = 'block';" class="quasilink">Bank</span></li>
-  </ul>
-
-  <p id="bankinfo" style="display: none;">
-    Bank: <i>Rabobank</i><br/>
-    Country: <i>Netherlands</i><br/>
-    SWIFT: <i>RABONL2U</i><br/>
-    Account: <i>147850770</i><br/>
-    Name: <i>Marijn Haverbeke</i><br/>
-    IBAN: <i>NL26 RABO 0147 8507 70</i>
-  </p>
-
-  <h2>Releases:</h2>
-
-  <p class="rel">17-12-2010: <a href="http://codemirror.net/codemirror-0.92.zip">Version 0.92</a>:</p>
-  <ul class="rel-note">
-    <li>Make CodeMirror work in XHTML documents.</li>
-    <li>Fix bug in handling of backslashes in Python strings.</li>
-    <li>The <code>styleNumbers</code> option is now officially
-    supported and documented.</li>
-    <li><code>onLineNumberClick</code> option added.</li>
-    <li>More consistent names <code>onLoad</code> and
-    <code>onCursorActivity</code> callbacks. Old names still work, but
-    are deprecated.</li>
-    <li>Add a <a href="contrib/freemarker/index.html">Freemarker</a> mode.</li>
-  </ul>
-
-  <p class="rel">11-11-2010: <a
-  href="http://codemirror.net/codemirror-0.91.zip">Version 0.91</a>:</p>
-  <ul class="rel-note">
-    <li>Adds support for <a href="contrib/java">Java</a>.</li>
-    <li>Small additions to the <a href="contrib/php">PHP</a> and <a href="contrib/sql">SQL</a> parsers.</li>
-    <li>Work around various <a href="https://bugs.webkit.org/show_bug.cgi?id=47806">Webkit</a> <a href="https://bugs.webkit.org/show_bug.cgi?id=23474">issues</a>.</li>
-    <li>Fix <code>toTextArea</code> to update the code in the textarea.</li>
-    <li>Add a <code>noScriptCaching</code> option (hack to ease development).</li>
-    <li>Make sub-modes of <a href="mixedtest.html">HTML mixed</a> mode configurable.</li>
-  </ul>
-
-  <p class="rel">02-10-2010: <a
-  href="http://codemirror.net/codemirror-0.9.zip">Version 0.9</a>:</p>
-  <ul class="rel-note">
-    <li>Add support for searching backwards.</li>
-    <li>There are now parsers for <a href="contrib/scheme/index.html">Scheme</a>, <a href="contrib/xquery/index.html">XQuery</a>, and <a href="contrib/ometa/index.html">OmetaJS</a>.</li>
-    <li>Makes <code>height: "dynamic"</code> more robust.</li>
-    <li>Fixes bug where paste did not work on OS X.</li>
-    <li>Add a <code>enterMode</code> and <code>electricChars</code> options to make indentation even more customizable.</li>
-    <li>Add <code>firstLineNumber</code> option.</li>
-    <li>Fix bad handling of <code>@media</code> rules by the CSS parser.</li>
-    <li>Take a new, more robust approach to working around the invisible-last-line bug in WebKit.</li>
-  </ul>
-
-  <p class="rel">22-07-2010: <a
-  href="http://codemirror.net/codemirror-0.8.zip">Version 0.8</a>:</p>
-  <ul class="rel-note">
-    <li>Add a <code>cursorCoords</code> method to find the screen
-    coordinates of the cursor.</li>
-    <li>A number of fixes and support for more syntax in the PHP parser.</li>
-    <li>Fix indentation problem with JSON-mode JS parser in Webkit.</li>
-    <li>Add a <a href="compress.html">minification</a> UI.</li>
-    <li>Support a <code>height: dynamic</code> mode, where the editor's
-    height will adjust to the size of its content.</li>
-    <li>Better support for IME input mode.</li>
-    <li>Fix JavaScript parser getting confused when seeing a no-argument
-    function call.</li>
-    <li>Have CSS parser see the difference between selectors and other
-    identifiers.</li>
-    <li>Fix scrolling bug when pasting in a horizontally-scrolled
-    editor.</li>
-    <li>Support <code>toTextArea</code> method in instances created with
-    <code>fromTextArea</code>.</li>
-    <li>Work around new Opera cursor bug that causes the cursor to jump
-    when pressing backspace at the end of a line.</li>
-  </ul>
-
-  <p class="rel">27-04-2010: <a
-  href="http://codemirror.net/codemirror-0.67.zip">Version
-  0.67</a>:</p>
-  <p class="rel-note">More consistent page-up/page-down behaviour
-  across browsers. Fix some issues with hidden editors looping forever
-  when line-numbers were enabled. Make PHP parser parse
-  <code>"\\"</code> correctly. Have <code>jumpToLine</code> work on
-  line handles, and add <code>cursorLine</code> function to fetch the
-  line handle where the cursor currently is. Add new
-  <code>setStylesheet</code> function to switch style-sheets in a
-  running editor.</p>
-
-  <p class="rel">01-03-2010: <a
-  href="http://codemirror.net/codemirror-0.66.zip">Version
-  0.66</a>:</p>
-  <p class="rel-note">Adds <code>removeLine</code> method to API.
-  Introduces the <a href="contrib/plsql/index.html">PLSQL parser</a>.
-  Marks XML errors by adding (rather than replacing) a CSS class, so
-  that they can be disabled by modifying their style. Fixes several
-  selection bugs, and a number of small glitches.</p>
+  <p class="rel-note">This is the old CodeMirror 1 project page. For new releases and
+  events, see <a href="http://codemirror.net/">CodeMirror 2</a>.</p>
 
 </div></div>
 
